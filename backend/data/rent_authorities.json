@@ -1,0 +1,41 @@
+{
+  "_comment": "NOTE: Seeded with schema structure. Do NOT fabricate contacts. Fill in official phone numbers and addresses verified from Karnataka DPAL / BBMP / Revenue Department gazette.",
+  "emergency_contacts": {
+    "police": "112 (Karnataka Emergency Response Support System)",
+    "bescom_helpline": "1912 (Electricity Supply Emergency)",
+    "bwssb_helpline": "1916 (Water Supply & Sewerage Board)",
+    "legal_aid": "080-22111714 (Karnataka State Legal Services Authority - KSLSA)"
+  },
+  "authorities_by_pin": {
+    "560001": {
+      "pin_code": "560001",
+      "division": "Bengaluru East / Central Sub-Division",
+      "authority_name": "Rent Controller & Assistant Commissioner (Bengaluru North Sub-Division)",
+      "office_address": "Office of the Assistant Commissioner, Kandaya Bhavana, KG Road, Bengaluru - 560009",
+      "phone": "",
+      "email": "",
+      "court_jurisdiction": "Court of Small Causes, Bengaluru",
+      "notes": "TODO: Verify and fill in official phone/email from official Karnataka revenue directory."
+    },
+    "560038": {
+      "pin_code": "560038",
+      "division": "Indiranagar / East Sub-Division",
+      "authority_name": "Rent Controller (East Sub-Division)",
+      "office_address": "K.R. Puram Mini Vidhana Soudha, Bengaluru",
+      "phone": "",
+      "email": "",
+      "court_jurisdiction": "Court of Small Causes, Mayo Hall Unit, Bengaluru",
+      "notes": "TODO: Verify and fill in official phone/email from official Karnataka revenue directory."
+    },
+    "560095": {
+      "pin_code": "560095",
+      "division": "Koramangala / South Sub-Division",
+      "authority_name": "Rent Controller (South Sub-Division)",
+      "office_address": "Mini Vidhana Soudha, Jayanagar 4th Block, Bengaluru",
+      "phone": "",
+      "email": "",
+      "court_jurisdiction": "Court of Small Causes, Bengaluru",
+      "notes": "TODO: Verify and fill in official phone/email from official Karnataka revenue directory."
+    }
+  }
+}

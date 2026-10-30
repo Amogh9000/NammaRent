@@ -1,0 +1,16 @@
+{
+  "act": "Karnataka Rent Act, 1999",
+  "jurisdiction": "Bengaluru / Karnataka only — binding",
+  "binding_sections": [
+    {"section": "7", "topic": "Rent revision / increase rules", "use_in": "Module B (unlawful rent increase)"},
+    {"section": "9", "topic": "Rent revision — agreement terms", "use_in": "Module B"},
+    {"section": "15", "topic": "Security deposit limits / refund obligations", "use_in": "Module A (deposit recovery)"},
+    {"section": "16", "topic": "Deduction rules / itemised justification", "use_in": "Module A"},
+    {"section": "27", "topic": "Protection against eviction / utility cutoff", "use_in": "Module C (emergency eviction / disconnection)"},
+    {"section": "49", "topic": "Essential services — restoration / lockout protection", "use_in": "Module C"},
+    {"section": "54", "topic": "Penalties / offences for violations", "use_in": "Module C (notice demands)"}
+  ],
+  "file_path": "legal-knowledge-base/data/karnataka_laws/karnataka_rent_act_1999.pdf",
+  "priority": 1,
+  "note": "Always preferred when property is in Karnataka. Do not substitute Model Tenancy Act for binding Karnataka deposit rules unless explicitly comparing references."
+}

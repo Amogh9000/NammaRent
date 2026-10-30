@@ -1,0 +1,10 @@
+{
+  "act": "Model Tenancy Act, 2021",
+  "jurisdiction": "Reference / model — NOT binding in Karnataka unless adopted",
+  "binding_sections": [
+    {"section": "11", "topic": "Security deposit cap (2 months residential)", "use_in": "Module A — comparison/reference only; NOT a Karnataka binding cap"}
+  ],
+  "file_path": "legal-knowledge-base/reference/model_tenancy_act_2021.pdf",
+  "priority": 3,
+  "note": "Reference only. Karnataka Rent Act Sections 15/16 govern deposit rules in Karnataka. Never treat this as the controlling statute in Karnataka production notices."
+}

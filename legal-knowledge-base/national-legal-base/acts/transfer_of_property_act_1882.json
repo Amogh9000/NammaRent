@@ -1,0 +1,11 @@
+{
+  "act": "Transfer of Property Act, 1882",
+  "jurisdiction": "National (India)",
+  "binding_sections": [
+    {"section": "106", "topic": "Termination / notice rules for certain lease types", "use_in": "Module B (notice context)"},
+    {"section": "108(m)", "topic": "Landlord obligations / lease conditions", "use_in": "Module A (contractual liability / painting deductions)"}
+  ],
+  "file_path": "legal-knowledge-base/data/national_laws/The_Transfer_Of_Property_Act_1882.PDF",
+  "priority": 2,
+  "note": "National and binding, but Karnataka Rent Act takes precedence for Karnataka residential tenancy matters where it provides specific rules."
+}

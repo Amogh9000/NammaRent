@@ -1,0 +1,278 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Namma Tenant Navigator",
+    "description": "Agentic AI legal aid & tenant rights system grounded in Karnataka housing law.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Health Check",
+        "operationId": "health_check",
+        "responses": {
+          "200": { "description": "Successful Response" }
+        }
+      }
+    },
+    "/api/statutes": {
+      "get": {
+        "summary": "Get Statutes",
+        "operationId": "get_statutes",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/KBChunk" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mask": {
+      "post": {
+        "summary": "Mask Payload",
+        "operationId": "mask_payload",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MaskRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MaskResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/step": {
+      "post": {
+        "summary": "Process Wizard Step",
+        "operationId": "process_wizard_step",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/StepRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StepResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/emergency": {
+      "post": {
+        "summary": "Triage Emergency",
+        "operationId": "triage_emergency",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EmergencyRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EmergencyInfo" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/vault/clear": {
+      "post": {
+        "summary": "Clear Vault",
+        "operationId": "clear_vault",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ClearVaultRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Successful Response" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "KBChunk": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "act": { "type": "string" },
+          "section": { "type": "string" },
+          "verified": { "type": "boolean" },
+          "source_url": { "type": "string" },
+          "plain_summary": { "type": "string" },
+          "statute_text": { "type": "string" },
+          "score": { "type": "number", "nullable": true }
+        },
+        "required": ["id", "title", "act", "section", "verified", "source_url", "plain_summary"]
+      },
+      "MaskRequest": {
+        "type": "object",
+        "properties": {
+          "session_id": { "type": "string" },
+          "text": { "type": "string" },
+          "tenant_name": { "type": "string", "nullable": true },
+          "landlord_name": { "type": "string", "nullable": true },
+          "property_address": { "type": "string", "nullable": true },
+          "pin_code": { "type": "string", "nullable": true }
+        },
+        "required": ["session_id", "text"]
+      },
+      "MaskResponse": {
+        "type": "object",
+        "properties": {
+          "masked_text": { "type": "string" },
+          "placeholders_detected": { "type": "object", "additionalProperties": { "type": "string" } },
+          "anonymized_count": { "type": "integer" },
+          "vault_items_count": { "type": "integer" }
+        },
+        "required": ["masked_text", "placeholders_detected", "anonymized_count", "vault_items_count"]
+      },
+      "StepRequest": {
+        "type": "object",
+        "properties": {
+          "session_id": { "type": "string" },
+          "case_type": { "type": "string", "nullable": true },
+          "tenant_name": { "type": "string", "nullable": true },
+          "landlord_name": { "type": "string", "nullable": true },
+          "property_address": { "type": "string", "nullable": true },
+          "pin_code": { "type": "string", "nullable": true },
+          "lease_registered": { "type": "boolean", "nullable": true },
+          "monthly_rent": { "type": "number", "nullable": true },
+          "deposit_paid": { "type": "number", "nullable": true },
+          "deductions_claimed": { "type": "number", "nullable": true },
+          "deduction_reasons": { "type": "string", "nullable": true },
+          "move_out_date": { "type": "string", "nullable": true },
+          "itemised_bills_provided": { "type": "boolean", "nullable": true },
+          "current_rent": { "type": "number", "nullable": true },
+          "proposed_rent": { "type": "number", "nullable": true },
+          "notice_received_date": { "type": "string", "nullable": true },
+          "effective_date": { "type": "string", "nullable": true },
+          "notice_channel": { "type": "string", "nullable": true },
+          "user_input": { "type": "string", "nullable": true },
+          "confirm_generation": { "type": "boolean", "nullable": true }
+        },
+        "required": ["session_id"]
+      },
+      "ComputedArithmetic": {
+        "type": "object",
+        "properties": {
+          "deposit_months": { "type": "number", "nullable": true },
+          "excess_deposit_months": { "type": "number", "nullable": true },
+          "net_refundable_amount": { "type": "number", "nullable": true },
+          "disputed_deductions": { "type": "number", "nullable": true },
+          "rent_increase_percent": { "type": "number", "nullable": true },
+          "notice_gap_days": { "type": "integer", "nullable": true },
+          "statutory_90_day_met": { "type": "boolean", "nullable": true },
+          "shortfall_days": { "type": "integer", "nullable": true }
+        }
+      },
+      "LegalViolation": {
+        "type": "object",
+        "properties": {
+          "issue": { "type": "string" },
+          "statutory_basis": { "type": "string" },
+          "kb_chunk_id": { "type": "string" },
+          "is_verified": { "type": "boolean" },
+          "summary": { "type": "string" }
+        },
+        "required": ["issue", "statutory_basis", "kb_chunk_id", "is_verified", "summary"]
+      },
+      "LegalAnalysis": {
+        "type": "object",
+        "properties": {
+          "case_type": { "type": "string" },
+          "arithmetic": { "$ref": "#/components/schemas/ComputedArithmetic" },
+          "violations": { "type": "array", "items": { "$ref": "#/components/schemas/LegalViolation" } },
+          "recommended_demand": { "type": "string" },
+          "confidence": { "type": "number" },
+          "citations": { "type": "array", "items": { "type": "string" } },
+          "warning_unverified_sources": { "type": "array", "items": { "type": "string" } },
+          "insufficient_context": { "type": "boolean" },
+          "guidance_message": { "type": "string", "nullable": true }
+        },
+        "required": ["case_type", "violations", "recommended_demand", "confidence", "citations"]
+      },
+      "EmergencyInfo": {
+        "type": "object",
+        "properties": {
+          "pin_code": { "type": "string", "nullable": true },
+          "authority_name": { "type": "string" },
+          "office_address": { "type": "string" },
+          "phone": { "type": "string" },
+          "police_emergency": { "type": "string" },
+          "bescom_helpline": { "type": "string" },
+          "bwssb_helpline": { "type": "string" },
+          "guidance": { "type": "string" },
+          "notes": { "type": "string", "nullable": true }
+        },
+        "required": ["authority_name", "office_address", "phone", "police_emergency", "bescom_helpline", "bwssb_helpline", "guidance"]
+      },
+      "StepResponse": {
+        "type": "object",
+        "properties": {
+          "session_id": { "type": "string" },
+          "current_step": { "type": "string" },
+          "case_type": { "type": "string", "nullable": true },
+          "missing_fields": { "type": "array", "items": { "type": "string" } },
+          "follow_up_question": { "type": "string", "nullable": true },
+          "arithmetic": { "$ref": "#/components/schemas/ComputedArithmetic", "nullable": true },
+          "analysis": { "$ref": "#/components/schemas/LegalAnalysis", "nullable": true },
+          "emergency_info": { "$ref": "#/components/schemas/EmergencyInfo", "nullable": true },
+          "notice_ready": { "type": "boolean" },
+          "notice_pdf_url": { "type": "string", "nullable": true }
+        },
+        "required": ["session_id", "current_step", "missing_fields", "notice_ready"]
+      },
+      "EmergencyRequest": {
+        "type": "object",
+        "properties": {
+          "pin_code": { "type": "string", "nullable": true },
+          "distress_keyword": { "type": "string", "nullable": true }
+        }
+      },
+      "ClearVaultRequest": {
+        "type": "object",
+        "properties": {
+          "session_id": { "type": "string" }
+        },
+        "required": ["session_id"]
+      }
+    }
+  }
+}

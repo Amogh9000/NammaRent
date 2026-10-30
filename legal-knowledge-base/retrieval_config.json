@@ -1,0 +1,30 @@
+{
+  "retrieval_config": {
+    "description": "Module-based retrieval priority for legal documents.",
+    "jurisdiction_default": "Karnataka",
+    "priority_order": [
+      {"level": 1, "label": "binding_local", "description": "Karnataka Rent Act / amendments — preferred for Karnataka property cases"},
+      {"level": 2, "label": "binding_national", "description": "Transfer of Property Act, Indian Contract Act, Specific Relief Act, BNS — binding nationally"},
+      {"level": 3, "label": "reference", "description": "Model Tenancy Act — reference only; never binding in Karnataka"}
+    ],
+    "modules": {
+      "Module A — Security deposit recovery": {
+        "primary": ["karnataka_rent_act_1999 (Sections 15, 16)", "karnataka_rent_amendment_2025"],
+        "national": ["transfer_of_property_act_1882 (Section 108(m))", "indian_contract_act_1872 (Section 37, Section 73)"],
+        "reference_only": ["model_tenancy_act_2021 (Section 11)"],
+        "instruction": "Always prefer Karnataka Rent Act Sections 15/16 over Model Tenancy Act Section 11 in Karnataka. Do NOT declare painting deductions automatically illegal — check wear/tear vs contractual liability."
+      },
+      "Module B — Unlawful rent increase": {
+        "primary": ["karnataka_rent_act_1999 (Sections 7, 9)", "karnataka_rent_amendment_2025"],
+        "national": ["transfer_of_property_act_1882 (Section 106)"],
+        "instruction": "Use agreement clause + Karnataka Rent Act Section 7/Section 9 first. Section 106 governs termination notice, not a general 90-day rent-increase notification rule — do not assume that violation automatically."
+      },
+      "Module C — Emergency eviction / utility disconnection": {
+        "primary": ["karnataka_rent_act_1999 (Sections 27, 49, 54)", "karnataka_rent_amendment_2025"],
+        "national": ["transfer_of_property_act_1882 (Section 108)", "specific_relief_act_1963 (Section 6)", "bharatiya_nyaya_sanhita_2023 (relevant criminal provisions)"],
+        "instruction": "Section 6 of Specific Relief Act applies only with its statutory conditions. BNS applies only where documented criminal conduct exists. Always refer DLSA 080-22939213 / Police 112 for immediate danger; use verified Rent Controller details only from official DPAL/revenue notifications."
+      }
+    }
+  },
+  "separation_note": "This index is the structured retrieval config. It does NOT replace the vector store (kb/). The orchestrator should read this before retrieving chunks to set module filters."
+}
