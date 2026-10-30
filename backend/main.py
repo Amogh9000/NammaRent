@@ -29,7 +29,7 @@ from backend.graph import (
     LegalAnalysis,
     EmergencyInfo
 )
-from backend.pdf_gen import generate_demand_notice_pdf
+from backend.pdf_gen import generate_demand_notice_docx
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -192,6 +192,20 @@ def process_wizard_step(req: StepRequest):
         if val is not None and hasattr(current, field):
             setattr(current, field, val)
 
+    # State isolation: prevent cross-dispute contamination in shared sessions
+    if current.case_type == "deposit":
+        current.current_rent = None
+        current.proposed_rent = None
+        current.notice_received_date = None
+        current.effective_date = None
+        current.notice_channel = None
+    elif current.case_type == "rent_hike":
+        current.deposit_paid = None
+        current.deductions_claimed = None
+        current.deduction_reasons = None
+        current.move_out_date = None
+        current.itemised_bills_provided = None
+
     engine = PrivacyEngine.get_instance()
     engine.register_known_entities(
         session_id=session_id,
@@ -280,28 +294,27 @@ def confirm_analysis(req: StepRequest):
 
 @app.get("/api/notice/{session_id}")
 def download_notice(session_id: str):
-    """Serves the generated PDF Demand Notice for instant download."""
+    """Serves fresh generated DOCX Demand Notice; stale .pdf never served."""
     state = SESSION_STATES.get(session_id)
-    if not state:
-        # Check if sample or existing PDF file is on disk
-        pdf_file = settings.DATA_DIR / f"demand_notice_{session_id}.pdf"
-        if not pdf_file.exists():
-            raise HTTPException(status_code=404, detail="Demand notice not found for this session.")
-        return FileResponse(
-            path=pdf_file,
-            filename=f"Namma_Demand_Notice_{session_id[:8]}.pdf",
-            media_type="application/pdf"
-        )
+    docx_file = settings.DATA_DIR / f"demand_notice_{session_id}.docx"
 
-    pdf_file = settings.DATA_DIR / f"demand_notice_{session_id}.pdf"
-    if not pdf_file.exists():
-        # Generate on the fly
-        generate_demand_notice_pdf(state, pdf_file)
+    if state:
+        # Priority: compute fresh file; stale cache never served
+        try:
+            generate_demand_notice_docx(state, docx_file)
+        except Exception:
+            # Fallback only if generation fails: use existing .docx, never .pdf
+            if not docx_file.exists():
+                raise HTTPException(status_code=500, detail="Notice generation failed and no cached DOCX available.")
+    else:
+        # No session state -- never serve old .pdf
+        if not docx_file.exists():
+            raise HTTPException(status_code=404, detail="Demand notice not found for this session.")
 
     return FileResponse(
-        path=pdf_file,
-        filename=f"Namma_Demand_Notice_{session_id[:8]}.pdf",
-        media_type="application/pdf"
+        path=docx_file,
+        filename=f"Namma_Demand_Notice_{session_id[:8]}.docx",
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     )
 
 @app.post("/api/vault/clear")

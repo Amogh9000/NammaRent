@@ -72,6 +72,11 @@ export interface EmergencyInfo {
   bwssb_helpline: string;
   guidance: string;
   notes?: string | null;
+  locality?: string | null;
+  division?: string | null;
+  court_jurisdiction?: string | null;
+  alt_phone?: string | null;
+  mobile?: string | null;
 }
 
 export interface StepRequest {

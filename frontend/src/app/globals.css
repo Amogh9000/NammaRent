@@ -1,58 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #0A0A0A;
-  --foreground: #F5F5F7;
+  --background: #F4F6FB;
+  --foreground: #0F172A;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  color: #475569;
+  background-color: #F4F6FB;
+  font-family: 'Manrope', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
 }
 
-/* Custom minimal scrollbar */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Bricolage Grotesque', 'Manrope', sans-serif;
+  color: #0F172A;
+  letter-spacing: -0.025em;
+}
+
+/* Infinite slow marquee */
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 35s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
+    overflow-x: auto;
+  }
+}
+
+/* Subtle clean scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0A0A0A;
+  background: #F4F6FB;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #262626;
-  border-radius: 3px;
+  background: #CBD5E1;
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3F3F46;
-}
-
-/* Paper document preview look */
-.paper-document {
-  background: #FFFFFF;
-  color: #0F172A;
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
-}
-
-/* Subtle glassmorphism */
-.glass-panel {
-  background: rgba(18, 18, 18, 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.glass-panel-elevated {
-  background: rgba(26, 26, 26, 0.85);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #94A3B8;
 }

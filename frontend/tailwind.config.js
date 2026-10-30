@@ -8,25 +8,32 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: '#0A0A0A',
-        surface: '#121212',
-        surfaceElevated: '#1A1A1A',
-        surfaceBorder: '#262626',
-        textPrimary: '#F5F5F7',
-        textSecondary: '#86868B',
-        accentEmerald: '#10B981',
-        accentAmber: '#F59E0B',
-        accentIndigo: '#6366F1',
-        accentRose: '#F43F5E',
+        pageBg: '#F4F6FB',
+        ink: {
+          DEFAULT: '#0F172A',
+          body: '#475569',
+          light: '#64748B',
+        },
+        brandBlue: {
+          DEFAULT: '#2563EB',
+          hover: '#1D4ED8',
+          soft: '#DBEAFE',
+          tint: '#EFF6FF',
+        },
+        navy: {
+          DEFAULT: '#0F172A',
+          hover: '#2563EB',
+        },
       },
       fontFamily: {
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'Segoe UI', 'Roboto', 'sans-serif'],
-        mono: ['SF Mono', 'Fira Code', 'JetBrains Mono', 'monospace'],
+        sans: ['Manrope', 'system-ui', '-apple-system', 'sans-serif'],
+        heading: ['"Bricolage Grotesque"', 'Manrope', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
       },
       boxShadow: {
-        'subtle-glow': '0 0 40px -10px rgba(16, 185, 129, 0.15)',
-        'amber-glow': '0 0 40px -10px rgba(245, 158, 11, 0.2)',
-        'paper': '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+        'soft-blue': '0 20px 60px rgba(37, 99, 235, 0.12)',
+        'soft-card': '0 10px 40px rgba(15, 23, 42, 0.05)',
+        'nav-pill': '0 10px 30px rgba(15, 23, 42, 0.08)',
       },
     },
   },

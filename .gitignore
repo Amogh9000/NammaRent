@@ -53,6 +53,8 @@ chroma_data/
 .chroma/
 backend/data/*.pdf
 backend/data/demand_notice_*.pdf
+backend/data/*.docx
+backend/data/demand_notice_*.docx
 .cache/
 
 # Environment & Secrets

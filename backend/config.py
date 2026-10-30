@@ -1,4 +1,4 @@
-import os
+﻿import os
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -26,14 +26,14 @@ class Settings(BaseSettings):
     
     # Storage & Paths
     DATA_DIR: Path = BASE_DIR / "data"
-    KB_DIR: Path = PROJECT_ROOT / "kb"
+    KB_DIR: Path = PROJECT_ROOT / "legal-knowledge-base"
     CHROMA_DIR: Path = BASE_DIR / "chroma_db"
     EXAMPLES_DIR: Path = PROJECT_ROOT / "examples"
     
     # Retrieval Confidence Threshold
     RELEVANCE_THRESHOLD: float = 0.35  # Cosine distance / similarity threshold
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=str(BASE_DIR / ".env"), extra="ignore")
 
 settings = Settings()
 

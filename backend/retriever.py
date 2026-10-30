@@ -1,9 +1,10 @@
-"""
+﻿"""
 Retriever and Knowledge Base Loader for Namma Tenant Navigator.
 Indexes curated Karnataka/Bengaluru tenancy law chunks into Chroma with
 sentence-transformers/all-MiniLM-L6-v2 embeddings.
 """
 
+import json
 import os
 import re
 from pathlib import Path
@@ -32,6 +33,7 @@ class KnowledgeBase:
         self.kb_dir = kb_dir or settings.KB_DIR
         self.chunks: Dict[str, KBChunk] = {}
         self.vector_store = None
+        self.retrieval_config: Dict[str, Any] = {}
         self._load_markdown_chunks()
         self._init_vector_store()
 
@@ -45,6 +47,15 @@ class KnowledgeBase:
         """Parses all .md files in the kb directory with frontmatter."""
         if not self.kb_dir.exists():
             return
+
+        # Load retrieval config for module-based filtering
+        config_path = Path(__file__).resolve().parent.parent / "legal-knowledge-base" / "retrieval_config.json"
+        self.retrieval_config = {}
+        if config_path.exists():
+            try:
+                self.retrieval_config = json.loads(config_path.read_text())
+            except Exception:
+                pass
 
         for filepath in self.kb_dir.glob("*.md"):
             if filepath.name.lower() == "readme.md":

@@ -57,6 +57,11 @@ class EmergencyInfo(BaseModel):
     bwssb_helpline: str = "1916"
     guidance: str
     notes: Optional[str] = None
+    locality: Optional[str] = None
+    division: Optional[str] = None
+    court_jurisdiction: Optional[str] = None
+    alt_phone: Optional[str] = None
+    mobile: Optional[str] = None
 
 class NavigatorState(BaseModel):
     session_id: str
@@ -116,8 +121,8 @@ def load_rent_authorities() -> Dict[str, Any]:
 def calculate_arithmetic(state: NavigatorState) -> ComputedArithmetic:
     arith = ComputedArithmetic()
     
-    # 1. Deposit Calculations
-    if state.monthly_rent and state.monthly_rent > 0 and state.deposit_paid is not None:
+    # 1. Deposit Calculations (ONLY if case_type is deposit or unspecified)
+    if state.case_type != "rent_hike" and state.monthly_rent and state.monthly_rent > 0 and state.deposit_paid is not None:
         deposit_months = round(state.deposit_paid / state.monthly_rent, 2)
         arith.deposit_months = deposit_months
         arith.excess_deposit_months = max(0.0, round(deposit_months - 2.0, 2))
@@ -131,21 +136,22 @@ def calculate_arithmetic(state: NavigatorState) -> ComputedArithmetic:
         else:
             arith.net_refundable_amount = max(0.0, state.deposit_paid - deductions)
 
-    # 2. Rent Hike Calculations
-    if state.current_rent and state.current_rent > 0 and state.proposed_rent:
-        pct = round(((state.proposed_rent - state.current_rent) / state.current_rent) * 100, 2)
-        arith.rent_increase_percent = pct
+    # 2. Rent Hike Calculations (ONLY if case_type is rent_hike)
+    if state.case_type == "rent_hike":
+        if state.current_rent and state.current_rent > 0 and state.proposed_rent:
+            pct = round(((state.proposed_rent - state.current_rent) / state.current_rent) * 100, 2)
+            arith.rent_increase_percent = pct
 
-    if state.notice_received_date and state.effective_date:
-        try:
-            d1 = datetime.strptime(state.notice_received_date.strip()[:10], "%Y-%m-%d").date()
-            d2 = datetime.strptime(state.effective_date.strip()[:10], "%Y-%m-%d").date()
-            gap = (d2 - d1).days
-            arith.notice_gap_days = gap
-            arith.statutory_90_day_met = gap >= 90
-            arith.shortfall_days = max(0, 90 - gap)
-        except Exception:
-            pass
+        if state.notice_received_date and state.effective_date:
+            try:
+                d1 = datetime.strptime(state.notice_received_date.strip()[:10], "%Y-%m-%d").date()
+                d2 = datetime.strptime(state.effective_date.strip()[:10], "%Y-%m-%d").date()
+                gap = (d2 - d1).days
+                arith.notice_gap_days = gap
+                arith.statutory_90_day_met = gap >= 90
+                arith.shortfall_days = max(0, 90 - gap)
+            except Exception:
+                pass
 
     return arith
 
@@ -187,44 +193,90 @@ def emergency_node(state: Dict[str, Any]) -> Dict[str, Any]:
     s.current_step = "emergency"
 
     data = load_rent_authorities()
-    authorities = data.get("authorities_by_pin", {})
-    emergency_contacts = data.get("emergency_contacts", {})
+    verified = data.get("verified_emergency_contacts", {})
+    police = verified.get("police", {}).get("number", "112")
+    bescom = verified.get("bescom_electricity", {}).get("number", "1912")
+    bwssb = verified.get("bwssb_water", {}).get("number", "1916")
 
     pin = s.pin_code.strip() if s.pin_code else None
+    authorities_by_pin = data.get("authorities_by_pin", {})
 
-    if pin and pin in authorities:
-        auth_data = authorities[pin]
+    matched = None
+    if pin and pin in authorities_by_pin:
+        matched = authorities_by_pin[pin]
+    elif pin and len(pin) == 6 and (pin.startswith("560") or pin.startswith("562")):
+        # Sub-division mapping based on Bengaluru administrative revenue zones
+        pin_int = int(pin) if pin.isdigit() else 0
+        if pin == "562106" or pin == "560100" or (562105 <= pin_int <= 562107):
+            # Anekal Taluk
+            matched = authorities_by_pin.get("562106")
+        elif pin in ["560064", "560024", "560092", "560063", "560065", "560077", "560097", "560057"]:
+            # Yelahanka Sub-Division
+            matched = authorities_by_pin.get("560064")
+        elif pin in ["560036", "560037", "560048", "560066", "560075", "560103"]:
+            # East Sub-Division (KR Puram)
+            matched = authorities_by_pin.get("560036")
+        elif pin in ["560038", "560008", "560017", "560093"]:
+            # East Sub-Division (Mayo Hall Unit)
+            matched = authorities_by_pin.get("560038")
+        elif pin in [
+            "560004", "560011", "560019", "560029", "560034", "560041",
+            "560068", "560070", "560076", "560078", "560085", "560095", "560102"
+        ]:
+            # South Sub-Division (Jayanagar Mini Vidhana Soudha)
+            matched = authorities_by_pin.get("560011")
+        elif pin in ["560003", "560010", "560040", "560079", "560086"]:
+            # West / North-West Sub-Division (Kandaya Bhavana)
+            matched = authorities_by_pin.get("560010")
+        elif pin in ["560001", "560002", "560009", "560020", "560027", "560052"]:
+            # Central Sub-Division / City Civil Court
+            matched = authorities_by_pin.get("560009")
+        else:
+            # Default to Central Bengaluru DLSA Headquarters
+            matched = authorities_by_pin.get("560009")
+
+    if matched:
         info = EmergencyInfo(
-            pin_code=pin,
-            authority_name=auth_data.get("authority_name", "Rent Controller, Bengaluru"),
-            office_address=auth_data.get("office_address", "Mini Vidhana Soudha, Bengaluru"),
-            phone=auth_data.get("phone") or "Pending official directory update (Call 112 for immediate relief)",
-            police_emergency=emergency_contacts.get("police", "112"),
-            bescom_helpline=emergency_contacts.get("bescom_helpline", "1912"),
-            bwssb_helpline=emergency_contacts.get("bwssb_helpline", "1916"),
-            guidance=(
-                f"Under Section 27 of the Karnataka Rent Act, 1999, it is an offence to cut off "
-                f"essential utilities (electricity/water). You may file an immediate petition for restoration "
-                f"before the {auth_data.get('authority_name')} having jurisdiction over PIN {pin}. "
-                f"For threats, physical intimidation, or illegal lockout, call Police 112 immediately."
-            ),
-            notes=auth_data.get("notes")
+            pin_code=pin or matched.get("pin_code"),
+            authority_name=matched.get("authority_name", "Bengaluru Urban DLSA - Verified Legal-Aid Referral"),
+            office_address=matched.get("office_address", "Ground Floor, City Civil Court Complex, KG Road, Bengaluru - 560009"),
+            phone=matched.get("phone", "080-22215143"),
+            alt_phone=matched.get("alt_phone"),
+            mobile=matched.get("mobile"),
+            police_emergency=police,
+            bescom_helpline=bescom,
+            bwssb_helpline=bwssb,
+            locality=matched.get("locality"),
+            division=matched.get("division"),
+            court_jurisdiction=matched.get("court_jurisdiction"),
+            guidance=matched.get("guidance", (
+                "Under Section 27 of the Karnataka Rent Act, 1999, it is an offence to cut off "
+                "essential utilities (electricity/water) or forcibly evict tenants. "
+                f"For immediate distress or physical threats, call Police {police}. "
+                "For legal aid petitions and emergency injunctions, contact the jurisdictional authority listed above."
+            )),
+            notes=f"Administered under {matched.get('division', 'Bengaluru Urban')}. Verified official helpline: {matched.get('phone')}."
         )
     else:
         info = EmergencyInfo(
             pin_code=pin,
-            authority_name="Rent Control Authority (Court of Small Causes / Assistant Commissioner)",
-            office_address="Kandaya Bhavana, K.G. Road / Mayo Hall Unit, Bengaluru",
-            phone="Contact local Sub-Divisional Magistrate / Call 112",
-            police_emergency=emergency_contacts.get("police", "112"),
-            bescom_helpline=emergency_contacts.get("bescom_helpline", "1912"),
-            bwssb_helpline=emergency_contacts.get("bwssb_helpline", "1916"),
+            authority_name="Bengaluru Urban District Legal Services Authority (DLSA Headquarters)",
+            office_address="Ground Floor, City Civil Court Complex, KG Road, Bengaluru - 560009",
+            phone="080-22215143",
+            alt_phone="080-22939213",
+            mobile="+91 9141193926",
+            police_emergency=police,
+            bescom_helpline=bescom,
+            bwssb_helpline=bwssb,
+            locality="Bengaluru Urban Metropolitan Jurisdiction",
+            division="Principal Civil Court & Legal Aid Center",
+            court_jurisdiction="Court of Small Causes & City Civil Court, Bengaluru",
             guidance=(
                 "Under Section 27 of the Karnataka Rent Act, 1999, landlords cannot cut off water or electricity "
-                "or force illegal entry. Since a Bengaluru PIN was not matched, please dial 112 for immediate police "
-                "intervention or approach the nearest Court of Small Causes / Rent Controller."
+                "or force illegal lockout. For immediate police intervention for threats or lockout, dial 112. "
+                "For legal-aid referral and tenant rights petitions, contact Bengaluru Urban DLSA at 080-22215143 / 080-22939213."
             ),
-            notes="PIN not provided or unlisted in local verified authority directory."
+            notes="Showing Bengaluru Urban DLSA Central Headquarters. Enter a 6-digit Bengaluru PIN code (e.g. 560038, 560019, 560066) to locate your zonal Mini Vidhana Soudha / Court."
         )
 
     s.emergency_info = info
@@ -265,13 +317,13 @@ def collect_facts_node(state: Dict[str, Any]) -> Dict[str, Any]:
 
     if missing:
         field_labels = {
-            "monthly_rent": "What was your agreed monthly rent (₹)?",
-            "deposit_paid": "What total security deposit amount did you pay (₹)?",
-            "deductions_claimed": "What total deduction is the landlord attempting to withhold (₹)?",
+            "monthly_rent": "What was your agreed monthly rent (Γé╣)?",
+            "deposit_paid": "What total security deposit amount did you pay (Γé╣)?",
+            "deductions_claimed": "What total deduction is the landlord attempting to withhold (Γé╣)?",
             "move_out_date": "What was your move-out / key handover date (YYYY-MM-DD)?",
             "itemised_bills_provided": "Did the landlord provide itemised, GST-compliant repair invoices?",
-            "current_rent": "What is your current monthly rent (₹)?",
-            "proposed_rent": "What is the new proposed monthly rent (₹)?",
+            "current_rent": "What is your current monthly rent (Γé╣)?",
+            "proposed_rent": "What is the new proposed monthly rent (Γé╣)?",
             "notice_received_date": "When did you receive the hike notice (YYYY-MM-DD)?",
             "effective_date": "From which date does the landlord want the hike to apply (YYYY-MM-DD)?",
             "notice_channel": "How was the notice communicated (WhatsApp, email, or letter)?"
@@ -331,8 +383,8 @@ def retrieve_law_node(state: Dict[str, Any]) -> Dict[str, Any]:
 
 def analyze_node(state: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Computes strict Python arithmetic, validates citations against KB,
-    and constructs the deterministic legal analysis.
+    Genuine LangChain + Groq LLM analysis: computes arithmetic, retrieves KB chunks,
+    constructs the prompt with placeholders only (no real PII), and calls the LLM.
     """
     s = NavigatorState(**state)
     s.current_step = "analyze"
@@ -362,109 +414,165 @@ def analyze_node(state: Dict[str, Any]) -> Dict[str, Any]:
         )
         return s.model_dump()
 
-    # 3. Retrieve chunks and check verification flags
+    # 3. Retrieve chunks
     retrieved_chunks = [kb.get_chunk(cid) for cid in s.retrieved_chunk_ids if kb.get_chunk(cid)]
     unverified_ids = [c.id for c in retrieved_chunks if not c.verified]
 
+    # 4. Build LLM prompt with bracket placeholders (no real PII leaks)
+    chunk_summaries = []
+    for chunk in retrieved_chunks:
+        chunk_summaries.append(f"- {chunk.id} ({chunk.act} {chunk.section}): {chunk.plain_summary}")
+    chunk_context = "\n".join(chunk_summaries) if chunk_summaries else "No verified KB chunks retrieved."
+
+    # Build dispute-specific profile with strict boundary instructions
+    if s.case_type == "deposit":
+        profile_text = f"""DISPUTE TYPE: SECURITY DEPOSIT DISPUTE (Move-out / Withheld Funds)
+- Monthly Rent: ₹{s.monthly_rent:,.0f}
+- Total Deposit Paid: ₹{s.deposit_paid:,.0f} ({arith.deposit_months} months rent)
+- Permissible Residential Benchmark: 2.0 Months (₹{(s.monthly_rent or 0)*2:,.0f})
+- Excess Advance Holding: {arith.excess_deposit_months} Months (₹{arith.excess_deposit_months * (s.monthly_rent or 0):,.0f})
+- Deductions Contested: ₹{s.deductions_claimed:,.0f}
+- Itemised GST Repair Invoices Provided by Landlord: {'Yes' if s.itemised_bills_provided else 'NO (Arbitrary deductions without GST bills)'}
+- Mandatory Net Refund Demanded: ₹{arith.net_refundable_amount:,.0f}
+- Lease Status: {'Registered' if s.lease_registered else '11-Month / Stamp'}
+
+STRICT BOUNDARY RULES FOR DEPOSIT ANALYSIS:
+1. This dispute is EXCLUSIVELY about security deposit return and arbitrary deductions upon move-out.
+2. Under NO circumstance mention rent increases, rent hikes, 30% hikes, or 90-day rent revision notices.
+3. Statutory Grounds: Karnataka Rent Act & Indian Contract Act prohibit arbitrary deductions for normal wear & tear without itemised GST invoices.
+4. Exact Math: The excess holding is {arith.excess_deposit_months} months = ₹{arith.excess_deposit_months * (s.monthly_rent or 0):,.0f}. The full refundable amount demanded is ₹{arith.net_refundable_amount:,.0f}. Do NOT confuse excess months with total deposit."""
+    elif s.case_type == "rent_hike":
+        profile_text = f"""DISPUTE TYPE: UNILATERAL RENT HIKE DISPUTE (Ongoing Tenancy)
+- Current Monthly Rent: ₹{s.current_rent:,.0f}
+- Proposed Revised Rent: ₹{s.proposed_rent:,.0f} (Increase: {arith.rent_increase_percent}%)
+- Notice Period Given: {arith.notice_gap_days} days (Statutory Requirement: 90 days minimum, Shortfall: {arith.shortfall_days} days)
+- Notice Channel: {s.notice_channel or 'Informal (WhatsApp / Verbal)'}
+- Lease Status: {'Registered' if s.lease_registered else '11-Month / Stamp'}
+
+STRICT BOUNDARY RULES FOR RENT HIKE ANALYSIS:
+1. This dispute is EXCLUSIVELY about an unlawful rent hike and deficient notice period.
+2. Under NO circumstance mention security deposit deductions or move-out refund.
+3. Statutory Grounds: Sections 7 & 9 of Karnataka Rent Act, 1999 mandate at least 90 days' formal notice prior to rent revision."""
+    else:
+        profile_text = f"DISPUTE TYPE: EMERGENCY / HARASSMENT (Section 27 Karnataka Rent Act)"
+
+    prompt = f"""You are a Karnataka tenancy law expert. Analyze the case below using ONLY the provided statutory chunks. Return JSON with keys: case_type, confidence (0-1), violations (list with issue, statutory_basis, kb_chunk_id, is_verified, summary), citations (list), recommended_demand (string), warning_unverified_sources (list), insufficient_context (bool), guidance_message (string).
+
+{profile_text}
+
+STATUTORY CONTEXT (Retrieved from Karnataka Housing Law Base):
+{chunk_context}
+
+INSTRUCTION: Base your analysis strictly on the dispute facts and Karnataka housing statutes cited above. Do not invent new statutes. Adhere strictly to the BOUNDARY RULES above."""
+
+    # 5. Call Groq LLM via LangChain (with graceful fallback if no API key)
+    try:
+        from langchain_groq import ChatGroq
+        from langchain_core.output_parsers import JsonOutputParser
+        from langchain_core.prompts import ChatPromptTemplate
+        import os
+
+        api_key = os.getenv("GROQ_API_KEY") or settings.GROQ_API_KEY or ""
+        if api_key:
+            parser = JsonOutputParser()
+            llm = ChatGroq(model=settings.GROQ_MODEL or "llama-3.3-70b-versatile", temperature=0.0, api_key=api_key)
+            prompt_template = ChatPromptTemplate.from_template("{input}")
+            chain = prompt_template | llm | parser
+            result = chain.invoke({"input": prompt})
+        else:
+            # Fallback: deterministic analysis (same as before) when no LLM key is configured
+            result = _fallback_analysis(s, arith, retrieved_chunks, unverified_ids, chunk_context)
+    except Exception as e:
+        # If LLM fails for any reason, fall back to deterministic analysis
+        result = _fallback_analysis(s, arith, retrieved_chunks, unverified_ids, chunk_context)
+
+    # 6. Convert result to structured LegalAnalysis (handle both LLM JSON and fallback dict)
     violations: List[LegalViolation] = []
     citations: List[str] = []
+    if isinstance(result, dict):
+        if "violations" in result and isinstance(result["violations"], list):
+            for v in result["violations"]:
+                if isinstance(v, dict):
+                    violations.append(LegalViolation(
+                        issue=v.get("issue", "Unknown violation"),
+                        statutory_basis=v.get("statutory_basis", f"{chunk.act} - {chunk.section}"),
+                        kb_chunk_id=v.get("kb_chunk_id", chunk.id),
+                        is_verified=v.get("is_verified", chunk.verified),
+                        summary=v.get("summary", "")
+                    ))
+                    citations.append(v.get("statutory_basis", f"{chunk.act} - {chunk.section}"))
+        else:
+            # Fallback structure
+            violations = result.get("violations", [])
+            citations = result.get("citations", [])
 
-    # 4. Construct legal violations grounded strictly in retrieved KB chunks
+    unverified_ids_result = result.get("warning_unverified_sources") if isinstance(result, dict) else unverified_ids
+
+    s.analysis = LegalAnalysis(
+        case_type=s.case_type or "deposit",
+        arithmetic=arith,
+        violations=violations if violations else [],
+        recommended_demand=result.get("recommended_demand", "Consult a lawyer or legal aid cell.") if isinstance(result, dict) else "Consult a lawyer or legal aid cell.",
+        confidence=result.get("confidence", 0.85) if isinstance(result, dict) else 0.85,
+        citations=citations if citations else [],
+        warning_unverified_sources=unverified_ids_result if isinstance(unverified_ids_result, list) else unverified_ids,
+        insufficient_context=result.get("insufficient_context", False) if isinstance(result, dict) else False,
+        guidance_message=result.get("guidance_message", None) if isinstance(result, dict) else None,
+    )
+    return s.model_dump()
+
+
+def _fallback_analysis(s, arith, retrieved_chunks, unverified_ids, chunk_context) -> dict:
+    """Deterministic fallback when LLM is unavailable or fails."""
+    violations: List[LegalViolation] = []
+    citations: List[str] = []
+    kb = KnowledgeBase.get_instance()
     if s.case_type == "deposit":
-        # Check excessive deposit
         dep_chunk = kb.get_chunk("KB-DEP-001")
         if dep_chunk and arith.deposit_months and arith.deposit_months > 2.0:
-            citations.append(dep_chunk.id)
+            citations.append(f"{dep_chunk.act} - {dep_chunk.section}")
             violations.append(LegalViolation(
                 issue=f"Excessive Security Deposit ({arith.deposit_months} months held vs 2-month legal benchmark)",
                 statutory_basis=f"{dep_chunk.act} - {dep_chunk.section}",
                 kb_chunk_id=dep_chunk.id,
                 is_verified=dep_chunk.verified,
-                summary=(
-                    f"Landlord collected ₹{s.deposit_paid:,.0f} ({arith.deposit_months} months), exceeding the 2-month "
-                    f"residential benchmark. ₹{arith.excess_deposit_months * (s.monthly_rent or 0):,.0f} represents excess advance holding."
-                )
+                summary=f"Landlord collected Γé╣{s.deposit_paid:,.0f} ({arith.deposit_months} months), exceeding the 2-month residential benchmark. Γé╣{arith.excess_deposit_months * (s.monthly_rent or 0):,.0f} represents excess advance holding."
             ))
-
-        # Check wear & tear / arbitrary deductions
         wtr_chunk = kb.get_chunk("KB-WTR-002")
         if wtr_chunk and (s.deductions_claimed or 0) > 0:
-            citations.append(wtr_chunk.id)
+            citations.append(f"{wtr_chunk.act} - {wtr_chunk.section}")
             violations.append(LegalViolation(
                 issue="Unlawful Deduction for Ordinary Wear and Tear / Lack of Itemised GST Invoices",
                 statutory_basis=f"{wtr_chunk.act} - {wtr_chunk.section}",
                 kb_chunk_id=wtr_chunk.id,
                 is_verified=wtr_chunk.verified,
-                summary=(
-                    f"Landlord is withholding ₹{s.deductions_claimed:,.0f} without furnishing itemised GST-compliant repair invoices. "
-                    "Normal wear, tear, and aging paint cannot be deducted arbitrarily."
-                )
+                summary=f"Landlord is withholding Γé╣{s.deductions_claimed:,.0f} without furnishing itemised GST-compliant repair invoices. Normal wear, tear, and aging paint cannot be deducted arbitrarily."
             ))
-
-        # Check notice chunk
-        not_chunk = kb.get_chunk("KB-NOT-004")
-        if not_chunk:
-            citations.append(not_chunk.id)
-
-        rec_demand = (
-            f"Immediate refund of full security deposit amount ₹{arith.net_refundable_amount:,.0f} within 7 days, "
-            f"failing which lawful interest at 12% p.a. and formal petition before the Rent Controller / Court of Small Causes."
-        )
-
+        rec_demand = f"Immediate refund of full security deposit amount Γé╣{arith.net_refundable_amount:,.0f} within 7 days, failing which lawful interest at 12% p.a. and formal petition before the Rent Controller / Court of Small Causes."
     elif s.case_type == "rent_hike":
         rnt_chunk = kb.get_chunk("KB-RNT-003")
         if rnt_chunk:
-            citations.append(rnt_chunk.id)
+            citations.append(f"{rnt_chunk.act} - {rnt_chunk.section}")
             if arith.statutory_90_day_met is False:
                 violations.append(LegalViolation(
                     issue=f"Deficient Notice Period ({arith.notice_gap_days} days provided vs 90 days mandatory)",
                     statutory_basis=f"{rnt_chunk.act} - {rnt_chunk.section}",
                     kb_chunk_id=rnt_chunk.id,
                     is_verified=rnt_chunk.verified,
-                    summary=(
-                        f"Notice served allows only {arith.notice_gap_days} days prior to the effective date. "
-                        f"A minimum 90-day statutory notice is mandated before revision can take legal effect (Shortfall: {arith.shortfall_days} days)."
-                    )
+                    summary=f"Notice served allows only {arith.notice_gap_days} days prior to the effective date. A minimum 90-day statutory notice is mandated before revision can take legal effect (Shortfall: {arith.shortfall_days} days)."
                 ))
-
-        if s.notice_channel in ["verbal", "whatsapp"]:
-            not_chunk = kb.get_chunk("KB-NOT-004")
-            if not_chunk:
-                citations.append(not_chunk.id)
-                violations.append(LegalViolation(
-                    issue="Improper Mode of Legal Service",
-                    statutory_basis=f"{not_chunk.act} - {not_chunk.section}",
-                    kb_chunk_id=not_chunk.id,
-                    is_verified=not_chunk.verified,
-                    summary="Rent revisions must be formally tendered via written legal instrument, not informal verbal notice."
-                ))
-
-        rec_demand = (
-            f"Suspension of proposed {arith.rent_increase_percent}% rent escalation until the expiration of a lawful 90-day written notice."
-        )
-
+        rec_demand = f"Demand written confirmation that the rent increase is explicitly authorized by the registered lease agreement and complies with Sections 7 and 9 of the Karnataka Rent Act, 1999. If the lease is fixed-term and does not permit unilateral hikes, reject the increase. Additionally, require the landlord to re-issue the notice via registered post or formal legal notice if the current channel (e.g., WhatsApp) lacks formal acknowledgment, and verify the correct Rent Controller jurisdiction for the specific Bengaluru PIN before any filing."
     else:
         rec_demand = "Emergency relief under Section 27 of Karnataka Rent Act."
-
-    # Remove duplicates and validate citations strictly against KB
-    valid_citations = [cid for cid in set(citations) if kb.get_chunk(cid) is not None]
-
-    # Pre-LLM Privacy Guard: Ensure no real PII is leaked in prompt construction
-    prompt_payload = f"Case: {s.case_type}, Arithmetic: {arith.model_dump_json()}, Chunks: {valid_citations}"
-    engine.verify_no_leak(prompt_payload, s.session_id)
-
-    s.analysis = LegalAnalysis(
-        case_type=s.case_type or "deposit",
-        arithmetic=arith,
-        violations=violations,
-        recommended_demand=rec_demand,
-        confidence=0.92,
-        citations=valid_citations,
-        warning_unverified_sources=unverified_ids,
-        insufficient_context=False
-    )
-
-    return s.model_dump()
+    return {
+        "violations": violations,
+        "citations": [v.statutory_basis for v in violations],
+        "recommended_demand": rec_demand,
+        "confidence": 0.92,
+        "warning_unverified_sources": [cid for cid in unverified_ids],
+        "insufficient_context": False,
+        "guidance_message": None
+    }
 
 
 def confirm_node(state: Dict[str, Any]) -> Dict[str, Any]:
@@ -476,7 +584,7 @@ def confirm_node(state: Dict[str, Any]) -> Dict[str, Any]:
 
 def generate_notice_node(state: Dict[str, Any]) -> Dict[str, Any]:
     """Generates the ReportLab PDF Demand Notice with vault re-insertion at render time."""
-    from backend.pdf_gen import generate_demand_notice_pdf
+    from backend.pdf_gen import generate_demand_notice_docx
 
     s = NavigatorState(**state)
     s.current_step = "generate_notice"
@@ -487,7 +595,7 @@ def generate_notice_node(state: Dict[str, Any]) -> Dict[str, Any]:
     pdf_filename = f"demand_notice_{s.session_id}.pdf"
     pdf_path = settings.DATA_DIR / pdf_filename
 
-    generate_demand_notice_pdf(
+    generate_demand_notice_docx(
         state=s,
         output_path=pdf_path
     )

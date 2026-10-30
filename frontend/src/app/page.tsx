@@ -1,75 +1,57 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Shield,
-  Trash2,
-  Lock,
-  PhoneCall,
   Scale,
-  Sparkles,
-  RefreshCw,
-  CheckCircle,
+  PhoneCall,
   FileText,
-  AlertTriangle,
+  Menu,
+  X,
+  ArrowRight,
+  Trash2,
 } from 'lucide-react';
 
 import { CommandCenter } from '@/components/CommandCenter';
-import { DiagnosticWizard } from '@/components/DiagnosticWizard';
-import { PrivacyShieldVisualizer } from '@/components/PrivacyShieldVisualizer';
+import { DiagnosticWizard, UserFormData } from '@/components/DiagnosticWizard';
 import { LegalDocumentPreviewer } from '@/components/LegalDocumentPreviewer';
 import { EmergencyDrawer } from '@/components/EmergencyDrawer';
 import { ConsentModal } from '@/components/ConsentModal';
 import { WhatAiSawPanel } from '@/components/WhatAiSawPanel';
-import { LegalAnalysis, KBChunk } from '@/types/api';
+import { LegalAnalysis } from '@/types/api';
 
 export default function Home() {
   const [sessionId, setSessionId] = useState('');
   const [viewMode, setViewMode] = useState<'command' | 'wizard'>('command');
-  const [activeTab, setActiveTab] = useState<'wizard' | 'privacy' | 'audit'>('wizard');
+  const [activeTab, setActiveTab] = useState<'wizard' | 'audit'>('wizard');
   const [isEmergencyOpen, setIsEmergencyOpen] = useState(false);
   const [emergencyPin, setEmergencyPin] = useState('560038');
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [pdfUrl, setPdfUrl] = useState('');
   const [latestAnalysis, setLatestAnalysis] = useState<LegalAnalysis | null>(null);
-  const [clearToast, setClearToast] = useState(false);
+  const [latestFormData, setLatestFormData] = useState<UserFormData | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    // Generate or retrieve session ID
     let sid = sessionStorage.getItem('namma_session_id');
     if (!sid) {
       sid = 'session-' + Math.random().toString(36).substring(2, 10);
       sessionStorage.setItem('namma_session_id', sid);
     }
     setSessionId(sid);
+
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 60);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleClearData = async () => {
-    if (!sessionId) return;
-    try {
-      await fetch('/api/vault/clear', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session_id: sessionId }),
-      });
-      // Generate fresh session
-      const newSid = 'session-' + Math.random().toString(36).substring(2, 10);
-      sessionStorage.setItem('namma_session_id', newSid);
-      setSessionId(newSid);
-      setLatestAnalysis(null);
-      setPdfUrl('');
-      setViewMode('command');
-      setClearToast(true);
-      setTimeout(() => setClearToast(false), 3000);
-    } catch (err) {
-      console.error('Clear error:', err);
-    }
-  };
-
-  const handleNoticeReady = (url: string, analysis: LegalAnalysis) => {
+  const handleNoticeReady = (url: string, analysis: LegalAnalysis, userData: UserFormData) => {
     setPdfUrl(url);
     setLatestAnalysis(analysis);
+    setLatestFormData(userData);
     setIsPreviewOpen(true);
   };
 
@@ -78,165 +60,234 @@ export default function Home() {
     setIsEmergencyOpen(true);
   };
 
-  return (
-    <main className="min-h-screen bg-[#0A0A0A] text-[#F5F5F7] flex flex-col justify-between selection:bg-emerald-500/20 selection:text-emerald-300">
-      {/* First-Run Privacy Consent */}
-      <ConsentModal onConsentAccepted={() => { }} />
+  const handleClearSession = async () => {
+    try {
+      await fetch('/api/vault/clear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+    } catch (e) {
+      console.error('Vault wipe error:', e);
+    }
+    sessionStorage.removeItem('namma_session_id');
+    const newSid = 'session-' + Math.random().toString(36).substring(2, 10);
+    sessionStorage.setItem('namma_session_id', newSid);
+    setSessionId(newSid);
+    setLatestAnalysis(null);
+    setLatestFormData(null);
+    setPdfUrl('');
+  };
 
-      {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-40 w-full border-b border-neutral-800/80 bg-[#0A0A0A]/80 backdrop-blur-xl px-4 sm:px-8 py-3.5">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+  const scrollToFaq = () => {
+    if (viewMode !== 'command') {
+      setViewMode('command');
+    }
+    setTimeout(() => {
+      const el = document.getElementById('faq-section');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
+  return (
+    <main className="min-h-screen bg-[#F4F6FB] text-[#475569] flex flex-col justify-between selection:bg-[#DBEAFE] selection:text-[#1D4ED8]">
+      {/* First-Run Privacy Consent */}
+      <ConsentModal onConsentAccepted={() => {}} />
+
+      {/* 1. Nav: Logo left, 3 plain text links center, navy pill button right */}
+      <nav
+        aria-label="Main Navigation"
+        className={`z-50 transition-all duration-300 ${
+          isScrolled
+            ? 'fixed top-3 left-1/2 -translate-x-1/2 max-w-4xl w-[92%] sm:w-auto bg-white/95 backdrop-blur-md border border-slate-200/60 rounded-full px-5 py-2.5 shadow-nav-pill'
+            : 'w-full max-w-6xl mx-auto px-4 sm:px-8 py-5'
+        }`}
+      >
+        <div className="flex items-center justify-between gap-6">
+          {/* Logo Left */}
           <div
             onClick={() => setViewMode('command')}
-            className="flex items-center gap-2.5 cursor-pointer group"
+            className="flex items-center gap-2.5 cursor-pointer group shrink-0"
           >
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 p-px flex items-center justify-center">
-              <div className="w-full h-full bg-neutral-950 rounded-[11px] flex items-center justify-center">
-                <Scale className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
-              </div>
+            <div className="w-8 h-8 rounded-full bg-[#0F172A] flex items-center justify-center text-white group-hover:bg-[#2563EB] transition-colors">
+              <Scale className="w-4 h-4" />
             </div>
-            <div>
-              <span className="font-bold text-sm tracking-tight text-white block">
-                Namma Tenant Navigator
-              </span>
-              <span className="text-[10px] font-mono text-neutral-400 block -mt-0.5">
-                Karnataka Housing Law & Rights
-              </span>
-            </div>
+            <span className="font-extrabold text-sm sm:text-base tracking-tight text-[#0F172A] font-heading">
+              Namma Tenant
+            </span>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              id="emergency-header-btn"
-              onClick={() => setIsEmergencyOpen(true)}
-              className="px-3 py-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 text-xs font-mono flex items-center gap-1.5 transition-colors"
+          {/* 3 Plain Text Links Center (Desktop) */}
+          <div className="hidden md:flex items-center gap-7 text-xs font-semibold text-[#0F172A]">
+            <span
+              onClick={() => {
+                if (viewMode !== 'command') setViewMode('command');
+                window.scrollTo({ top: 500, behavior: 'smooth' });
+              }}
+              className="hover:text-[#2563EB] cursor-pointer transition-colors"
             >
-              <PhoneCall className="w-3 h-3 text-rose-400" />
-              <span className="hidden sm:inline">Emergency 112</span>
+              Statutory Rules
+            </span>
+            <span
+              onClick={() => {
+                if (viewMode !== 'command') setViewMode('command');
+                window.scrollTo({ top: 1100, behavior: 'smooth' });
+              }}
+              className="hover:text-[#2563EB] cursor-pointer transition-colors"
+            >
+              How It Works
+            </span>
+            <span
+              onClick={scrollToFaq}
+              className="hover:text-[#2563EB] cursor-pointer transition-colors"
+            >
+              FAQ
+            </span>
+          </div>
+
+          {/* Right Actions: Emergency 112 link + Navy Pill Button */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setIsEmergencyOpen(true)}
+              className="text-xs font-semibold text-rose-600 hover:text-rose-700 transition-colors hidden sm:inline-flex items-center gap-1 cursor-pointer"
+            >
+              <PhoneCall className="w-3.5 h-3.5" />
+              <span>112 Triage</span>
             </button>
 
             <button
-              id="clear-data-btn"
-              onClick={handleClearData}
-              title="Wipe all in-memory vault tokens and files"
-              className="px-3 py-1.5 rounded-lg border border-neutral-800 hover:border-rose-500/40 bg-neutral-900/80 text-neutral-400 hover:text-rose-400 text-xs font-mono flex items-center gap-1.5 transition-colors"
+              id="nav-evaluate-pill-btn"
+              onClick={() => setViewMode('wizard')}
+              className="px-5 py-2.5 rounded-full bg-[#0F172A] hover:bg-[#2563EB] text-white text-xs font-semibold tracking-wide transition-colors shadow-xs cursor-pointer whitespace-nowrap"
             >
-              <Trash2 className="w-3 h-3" />
-              <span className="hidden sm:inline">Clear My Data</span>
+              Evaluate Lease
+            </button>
+
+            {/* Mobile Menu Toggle Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-1 text-[#0F172A] md:hidden"
+              aria-label="Toggle Navigation Menu"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
-      </header>
+
+        {/* Mobile Dropdown Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden mt-3 pt-3 border-t border-slate-100 flex flex-col gap-3 text-xs font-semibold text-[#0F172A] pb-2">
+            <span
+              onClick={() => {
+                setViewMode('command');
+                setMobileMenuOpen(false);
+              }}
+              className="hover:text-[#2563EB] cursor-pointer"
+            >
+              Home
+            </span>
+            <span
+              onClick={() => {
+                setViewMode('command');
+                setMobileMenuOpen(false);
+                scrollToFaq();
+              }}
+              className="hover:text-[#2563EB] cursor-pointer"
+            >
+              FAQs
+            </span>
+            <span
+              onClick={() => {
+                setIsEmergencyOpen(true);
+                setMobileMenuOpen(false);
+              }}
+              className="text-rose-600 cursor-pointer"
+            >
+              Emergency 112 Triage
+            </span>
+          </div>
+        )}
+      </nav>
 
       {/* Main Content Area */}
-      <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6">
-        {/* Toast for Clear Data */}
-        <AnimatePresence>
-          {clearToast && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="fixed top-16 right-6 z-50 p-3 rounded-xl bg-emerald-500 text-black font-semibold text-xs flex items-center gap-2 shadow-2xl"
-            >
-              <CheckCircle className="w-4 h-4" />
-              <span>Vault Cleared. Session data erased permanently.</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
+      <div className="flex-1 w-full">
         {viewMode === 'command' ? (
-          <div className="space-y-12">
-            <CommandCenter
-              onStartEvaluation={() => setViewMode('wizard')}
-              onOpenEmergency={() => setIsEmergencyOpen(true)}
-            />
-
-            {/* Embedded Live Privacy Shield Demo */}
-            <div className="max-w-5xl mx-auto">
-              <div className="mb-3 px-1 flex items-center justify-between">
-                <span className="text-xs font-mono text-neutral-400 uppercase tracking-wider">
-                  Live Local Shield Demo
-                </span>
-                <span className="text-[11px] text-emerald-400 font-mono">Real /api/mask Endpoint</span>
-              </div>
-              <PrivacyShieldVisualizer
-                sessionId={sessionId}
-                tenantName="Aarav Sharma"
-                landlordName="Suresh Reddy"
-                propertyAddress="12th Main, HAL 2nd Stage, Indiranagar, Bengaluru"
-                pinCode="560038"
-              />
-            </div>
-          </div>
+          <CommandCenter
+            onStartEvaluation={() => setViewMode('wizard')}
+            onOpenEmergency={() => setIsEmergencyOpen(true)}
+          />
         ) : (
-          <div className="space-y-6 pt-2">
-            {/* Wizard Navigation Header */}
-            <div className="flex flex-wrap items-center justify-between gap-3 max-w-2xl mx-auto pb-4 border-b border-neutral-800/80">
+          <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+            {/* Wizard Header Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200/60">
               <div className="flex items-center gap-2">
                 <button
+                  onClick={() => setViewMode('command')}
+                  className="px-3.5 py-1.5 rounded-full bg-white border border-slate-200 text-xs font-semibold text-[#0F172A] hover:bg-slate-50 transition-colors"
+                >
+                  ← Back to Overview
+                </button>
+                <div className="h-4 w-px bg-slate-300 mx-1" />
+                <button
                   onClick={() => setActiveTab('wizard')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-colors ${activeTab === 'wizard'
-                      ? 'bg-neutral-800 text-white font-semibold'
-                      : 'text-neutral-400 hover:text-white'
-                    }`}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                    activeTab === 'wizard'
+                      ? 'bg-[#0F172A] text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
+                  }`}
                 >
                   Diagnostic Wizard
                 </button>
                 <button
-                  onClick={() => setActiveTab('privacy')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-colors ${activeTab === 'privacy'
-                      ? 'bg-neutral-800 text-white font-semibold'
-                      : 'text-neutral-400 hover:text-white'
-                    }`}
-                >
-                  Privacy Shield Visualizer
-                </button>
-                <button
                   onClick={() => setActiveTab('audit')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-colors ${activeTab === 'audit'
-                      ? 'bg-neutral-800 text-white font-semibold'
-                      : 'text-neutral-400 hover:text-white'
-                    }`}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                    activeTab === 'audit'
+                      ? 'bg-[#0F172A] text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
+                  }`}
                 >
                   What the AI Saw
                 </button>
               </div>
 
-              {pdfUrl && (
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setIsPreviewOpen(true)}
-                  className="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-xs font-mono flex items-center gap-1.5 hover:bg-emerald-500/20 transition-colors"
+                  onClick={handleClearSession}
+                  className="px-3.5 py-1.5 rounded-full bg-white border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+                  title="Purge session cache and server memory"
                 >
-                  <FileText className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>View Generated Notice</span>
+                  <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                  <span>Clear My Data</span>
                 </button>
-              )}
+
+                {pdfUrl && (
+                  <button
+                    onClick={() => setIsPreviewOpen(true)}
+                    className="px-4 py-1.5 rounded-full bg-[#EFF6FF] text-[#2563EB] border border-blue-200 text-xs font-semibold flex items-center gap-1.5 hover:bg-blue-100 transition-colors"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>View Notice Document</span>
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* Active Sub-Tab View */}
             {activeTab === 'wizard' && (
               <DiagnosticWizard
                 sessionId={sessionId}
                 onNoticeReady={handleNoticeReady}
                 onTriggerEmergency={handleTriggerEmergency}
+                onAnalysisComplete={(analysis) => setLatestAnalysis(analysis)}
               />
             )}
 
-            {activeTab === 'privacy' && (
-              <div className="max-w-3xl mx-auto">
-                <PrivacyShieldVisualizer sessionId={sessionId} />
-              </div>
-            )}
-
             {activeTab === 'audit' && (
-              <div className="max-w-2xl mx-auto">
-                <WhatAiSawPanel
-                  sessionId={sessionId}
-                  analysis={latestAnalysis}
-                  arithmetic={latestAnalysis?.arithmetic}
-                />
-              </div>
+              <WhatAiSawPanel
+                sessionId={sessionId}
+                analysis={latestAnalysis}
+                arithmetic={latestAnalysis?.arithmetic}
+                onClearData={handleClearSession}
+              />
             )}
           </div>
         )}
@@ -256,17 +307,8 @@ export default function Home() {
         pdfUrl={pdfUrl}
         sessionId={sessionId}
         analysis={latestAnalysis}
+        userData={latestFormData}
       />
-
-      {/* Footer */}
-      <footer className="w-full border-t border-neutral-900 bg-[#0A0A0A] px-4 py-6 mt-16 text-center text-xs text-neutral-500 font-mono">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <span>Namma Tenant Navigator © Bengaluru Urban Legal Aid</span>
-          <span className="text-neutral-600">
-            Grounded in Karnataka Rent Act, 1999 & Transfer of Property Act, 1882. Not legal advice.
-          </span>
-        </div>
-      </footer>
     </main>
   );
 }

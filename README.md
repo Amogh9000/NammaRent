@@ -1,4 +1,4 @@
-# Namma Tenant Navigator (ನಮ್ಮ ಟೆನೆಂಟ್ ನ್ಯಾವಿಗೇಟರ್)
+﻿# Namma Tenant Navigator (α▓¿α▓«α│ìα▓« α▓ƒα│åα▓¿α│åα▓éα▓ƒα│ì α▓¿α│ìα▓»α▓╛α▓╡α▓┐α▓ùα│çα▓ƒα▓░α│ì)
 
 > **Agentic AI Legal Aid & Tenant Rights Engine for Urban Renters in Bengaluru**  
 > Grounded in the **Karnataka Rent Act, 1999**, **Transfer of Property Act, 1882**, and the **Model Tenancy Framework**.  
@@ -85,10 +85,6 @@ graph TD
 cd d:\agenticai\backend
 .\venv\Scripts\Activate.ps1
 
-In mac:
-cd backend
-source backend/.venv/bin/activate
-
 # Install dependencies (if not already installed)
 pip install -r requirements.txt
 
@@ -120,7 +116,7 @@ python -m pytest backend/tests/ -v
 ```
 
 The test suite validates:
-- **Masker Verification**: PII removed (names, phones, Bengaluru addresses, PIN codes), amounts (`₹2,10,000`) and dates (`15-08-2024`) survive untouched, stable placeholders maintained across requests.
+- **Masker Verification**: PII removed (names, phones, Bengaluru addresses, PIN codes), amounts (`Γé╣2,10,000`) and dates (`15-08-2024`) survive untouched, stable placeholders maintained across requests.
 - **Privacy Leak Guard**: Pre-dispatch scanner raises `PrivacyLeakException` and aborts if any raw vault value appears in the outgoing model payload.
 - **Retriever Strictness**: Returns accurate citations (`KB-DEP-001`, `KB-WTR-002`) for tenancy queries; returns 0 results for unrelated queries.
 - **Emergency Routing**: Distress queries bypass document generation and route directly to emergency contact lookups.
