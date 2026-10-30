@@ -1,0 +1,58 @@
+{
+  "_comment": "Verified official Bengaluru emergency and legal-aid directory. Rent Controller / jurisdiction contacts are NOT included here — they require verified government gazette / DPAL notifications per PIN and should be added only after official confirmation. No mixing with legal-document vector store (kb/).",
+  "verified_emergency_contacts": {
+    "police": {
+      "number": "112",
+      "service": "India-wide emergency (Police, Fire, Medical)",
+      "hours": "24×7",
+      "verification": "Verified — Official ERSS portal",
+      "use_case": "Physical intimidation, lock-outs, threats, violence, urgent safety emergency"
+    },
+    "bescom_electricity": {
+      "number": "1912",
+      "service": "BESCOM Electricity Complaints",
+      "hours": "Standard helpline",
+      "verification": "PENDING — I have not independently verified this number against a current official BESCOM directory. Mark as pending verification before production use.",
+      "source": "BESCOM official website (unverified in this revision)",
+      "use_case": "Electricity supply complaints, disconnection issues"
+    },
+    "bwssb_water": {
+      "number": "1916",
+      "service": "BWSSB Water Supply & Sewerage",
+      "hours": "24×7 helpline",
+      "verification": "Verified",
+      "source": "Official BWSSB complaint portal",
+      "use_case": "Water supply complaints, sewerage service issues"
+    },
+    "legal_aid_dlsa": {
+      "number_primary": "080-22939213",
+      "service": "Bengaluru Urban DLSA (District Legal Services Authority)",
+      "hours": "Standard office hours",
+      "verification": "Verified — Bengaluru Urban Courts / DLSA directory",
+      "address": "Ground Floor, City Civil Court Complex, Bengaluru – 560009",
+      "email": "dlsa.bangaloreurban@gmail.com",
+      "discrepancy_note": "KSLSA directory also lists 080-22215143 and 9141193926. Published telephone details differ — confirm before treating interchangeably.",
+      "use_case": "Free legal aid, legal advice referral, petition assistance"
+    },
+    "legal_aid_kslsa": {
+      "service": "Karnataka State Legal Services Authority (KSLSA) / NALSA Helpline",
+      "helpline_nalsa": "15100",
+      "service_description": "NALSA legal-aid helpline",
+      "verification": "Verified — Official KSLSA / NALSA details",
+      "address": "1st Floor, Nyaya Degula Building, H. Siddaiah Road, Bengaluru – 560027",
+      "phone_kslsa": "080-22111730",
+      "email_kslsa": "mskar-slsa@hck.gov.in",
+      "use_case": "State-level legal services, escalation from DLSA, formal petitions"
+    }
+  },
+  "jurisdiction_warning": {
+    "message": "Do NOT assume every Bengaluru PIN code maps to the same Rent Controller / Rent Court forum. The applicable Rent Controller, Assistant Commissioner / Sub-Divisional Magistrate, and Court of Small Causes jurisdiction depend on the property location, the relevant government notification, and the statutory threshold under the Karnataka Rent Act. Section 49 provides for an application to the Controller, but the applicable territorial jurisdiction, current designation and filing address must be verified from the relevant Karnataka DPAL / Revenue Department gazette.",
+    "action": "For emergency utility restoration or unauthorized lock-outs, use verified DLSA (legal-aid) referral and Police 112 for immediate safety. Rent Controller filing details must be verified per PIN and jurisdiction before inclusion in any production directory.",
+    "unverified_removals": [
+      "Rent Controller (East Sub-Division), K.R. Puram Mini Vidhana Soudha — unverified; removed until official directory confirmation.",
+      "Rent Controller (South Sub-Division), Jayanagar 4th Block — unverified; removed.",
+      "Bengaluru North Sub-Division phone/email — not verified from official directory; kept address reference only with empty phone/email."
+    ]
+  },
+  "separation_note": "This file is the structured contact database (data/rent_authorities.json). It is NOT the legal-document vector store (kb/). They must remain separate."
+}

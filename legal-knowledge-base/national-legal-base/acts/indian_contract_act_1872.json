@@ -1,0 +1,11 @@
+{
+  "act": "Indian Contract Act, 1872",
+  "jurisdiction": "National (India)",
+  "binding_sections": [
+    {"section": "37", "topic": "Obligation of parties to contracts — performance", "use_in": "Module A (deposit refund obligation)"},
+    {"section": "73", "topic": "Compensation for loss / damage for breach", "use_in": "Module A (interest / damages claim)"}
+  ],
+  "file_path": "legal-knowledge-base/data/national_laws/Contract_Act_1872.pdf",
+  "priority": 2,
+  "note": "National contract framework. Use with Karnataka Rent Act for deposit / contract breach analysis."
+}

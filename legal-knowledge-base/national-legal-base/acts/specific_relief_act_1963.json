@@ -1,0 +1,10 @@
+{
+  "act": "Specific Relief Act, 1963",
+  "jurisdiction": "National (India)",
+  "binding_sections": [
+    {"section": "6", "topic": "Summary remedy for dispossession otherwise than through due process", "use_in": "Module C (emergency eviction / lockout — subject to statutory conditions)"}
+  ],
+  "file_path": "legal-knowledge-base/data/national_laws/Specific_Relief_Act_1963.pdf",
+  "priority": 2,
+  "note": "Not automatic; requires proof of dispossession without due process and is subject to the Act's conditions. Do not treat as blanket eviction defense."
+}

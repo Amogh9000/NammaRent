@@ -1,0 +1,10 @@
+{
+  "act": "Bharatiya Nyaya Sanhita, 2023",
+  "jurisdiction": "National (criminal code replacing IPC)",
+  "binding_sections": [
+    {"section": "relevant_criminal_provisions", "topic": "Criminal provisions for threats, intimidation, coercive conduct", "use_in": "Module C (harassment / physical intimidation — only when actual criminal conduct is documented)"}
+  ],
+  "file_path": "legal-knowledge-base/data/national_laws/bharatiya_nyaya_sanhita_2023.pdf",
+  "priority": 2,
+  "note": "Only cite where actual conduct (threats, physical intimidation, illegal lockout with coercive elements) is documented. Not a substitute for civil Rent Controller / DLSA relief."
+}
