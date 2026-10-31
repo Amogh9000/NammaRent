@@ -189,7 +189,7 @@ Instructions:
             )
 
             parser = JsonOutputParser()
-            model_name = getattr(settings, "GROQ_MODEL", "llama-3.3-70b-versatile")
+            model_name = getattr(settings, "GROQ_MODEL", "qwen-qwq-32b")
             llm = ChatGroq(model=model_name, temperature=0.1, api_key=api_key, request_timeout=5, max_retries=1)
             chain = prompt_tmpl | llm | parser
 

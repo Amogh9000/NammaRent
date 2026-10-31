@@ -1,4 +1,4 @@
-﻿import os
+import os
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     
     # LLM Settings
     GROQ_API_KEY: str = ""
-    GROQ_MODEL: str = "llama-3.3-70b-versatile"  # High capacity Llama-3 model for strict schema & reasoning
+    GROQ_MODEL: str = "qwen-qwq-32b"  # Qwen QwQ 32B model for strict schema & reasoning
     GROQ_FALLBACK_MODEL: str = "llama-3.1-8b-instant"
     
     # Server Settings

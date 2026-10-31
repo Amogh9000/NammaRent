@@ -476,7 +476,7 @@ INSTRUCTION: Base your analysis strictly on the dispute facts and Karnataka hous
         api_key = os.getenv("GROQ_API_KEY") or settings.GROQ_API_KEY or ""
         if api_key:
             parser = JsonOutputParser()
-            llm = ChatGroq(model=settings.GROQ_MODEL or "llama-3.3-70b-versatile", temperature=0.0, api_key=api_key, request_timeout=5, max_retries=1)
+            llm = ChatGroq(model=settings.GROQ_MODEL or "qwen-qwq-32b", temperature=0.0, api_key=api_key, request_timeout=5, max_retries=1)
             prompt_template = ChatPromptTemplate.from_template("{input}")
             chain = prompt_template | llm | parser
             result = chain.invoke({"input": prompt})
