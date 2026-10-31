@@ -70,7 +70,7 @@ const STEPS_DATA = [
   {
     num: '06',
     title: 'Advocate-Ready Notice Generation',
-    desc: 'Download a formally formatted DOCX or PDF legal demand notice ready for delivery to your landlord or legal counsel.',
+    desc: 'Download an advocate-ready, formally formatted DOCX legal demand notice ready for immediate service or review.',
   },
 ];
 

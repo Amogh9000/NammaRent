@@ -177,8 +177,17 @@ def generate_demand_notice_docx(state: Any, output_path: Path) -> Path:
 
     doc.add_paragraph()
 
+    # Extract orchestrated notice from LangChain/orchestrator if available
+    orchestrated = getattr(state, 'orchestrated_notice', None)
+    if not orchestrated and hasattr(state, '__dict__'):
+        orchestrated = getattr(state, '__dict__', {}).get('orchestrated_notice')
+    if isinstance(state, dict):
+        orchestrated = state.get('orchestrated_notice')
+
     # Subject
-    if case_type == 'deposit':
+    if orchestrated and orchestrated.get('subject'):
+        subject_text = orchestrated['subject']
+    elif case_type == 'deposit':
         subject_text = (
             f'Subject: Legal notice calling upon you to refund the security deposit of Rs. {_fmt_inr(deposit)}/- '
             f'(Rupees {_to_words(deposit)} Only) for the premises at {address}, Bengaluru - {pin} '
@@ -217,8 +226,14 @@ def generate_demand_notice_docx(state: Any, output_path: Path) -> Path:
 
     doc.add_paragraph()
 
-    # Numbered body paragraphs
-    if case_type == 'deposit':
+    # Numbered body paragraphs: Use dynamic orchestrated paragraphs if provided, else template
+    if orchestrated and orchestrated.get('body_paragraphs'):
+        for bp in orchestrated['body_paragraphs']:
+            num_para(bp)
+        if orchestrated.get('demand_text'):
+            doc.add_paragraph()
+            para(orchestrated['demand_text'], align=WD_ALIGN_PARAGRAPH.JUSTIFY)
+    elif case_type == 'deposit':
         num_para(
             f'That I was and am your tenant in the said premises on a monthly rent of Rs. {_fmt_inr(monthly_rent)}/- '
             f'(Rupees {_to_words(monthly_rent)} Only) under a rental agreement duly executed between us.'
@@ -352,3 +367,8 @@ def generate_demand_notice_docx(state: Any, output_path: Path) -> Path:
 
     doc.save(str(output_path))
     return output_path
+
+
+# Backward compatibility alias
+generate_demand_notice_pdf = generate_demand_notice_docx
+

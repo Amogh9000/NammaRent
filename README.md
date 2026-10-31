@@ -1,4 +1,4 @@
-﻿# Namma Tenant Navigator (α▓¿α▓«α│ìα▓« α▓ƒα│åα▓¿α│åα▓éα▓ƒα│ì α▓¿α│ìα▓»α▓╛α▓╡α▓┐α▓ùα│çα▓ƒα▓░α│ì)
+﻿# Namma Tenant Navigator 
 
 > **Agentic AI Legal Aid & Tenant Rights Engine for Urban Renters in Bengaluru**  
 > Grounded in the **Karnataka Rent Act, 1999**, **Transfer of Property Act, 1882**, and the **Model Tenancy Framework**.  
@@ -82,7 +82,7 @@ graph TD
 ### 1. Backend Setup
 ```powershell
 # Navigate to backend and activate venv
-cd d:\agenticai\backend
+cd D:\NammaRent-main\backend
 .\venv\Scripts\Activate.ps1
 
 # Install dependencies (if not already installed)

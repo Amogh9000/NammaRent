@@ -2,7 +2,7 @@
 Validates, sanitizes, and repairs LLM output before rendering.
 """
 import re
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field, validator
 
 
@@ -120,3 +120,158 @@ def repair_output(text: str, errors: List[str]) -> str:
                 if all(ch in "-=_*──" for ch in line.strip()):
                     fixed = fixed.replace(line, "")
     return fixed
+
+
+def orchestrate_notice(state: Any) -> NoticeOutput:
+    """Drafts, sanitizes, and validates notice paragraphs using LangChain & Groq LLM,
+    incorporating dynamic violations and arithmetic from NavigatorState.
+    """
+    from datetime import datetime
+    import os
+
+    # 1. Extract context from state
+    case_type = getattr(state, "case_type", "deposit") or "deposit"
+    tenant = getattr(state, "tenant_name", None) or "[TENANT NAME]"
+    landlord = getattr(state, "landlord_name", None) or "[LANDLORD NAME]"
+    address = getattr(state, "property_address", None) or "[PROPERTY ADDRESS]"
+    pin = getattr(state, "pin_code", None) or "560000"
+    today_str = datetime.now().strftime("%d %B %Y").lstrip("0").strip()
+
+    arith = getattr(state, "arithmetic", None)
+    analysis = getattr(state, "analysis", None)
+
+    violations_text = ""
+    if analysis and getattr(analysis, "violations", None):
+        violations_text = "\n".join([
+            f"- {v.issue} ({v.statutory_basis}): {v.summary}"
+            for v in analysis.violations
+        ])
+
+    demand_summary = getattr(analysis, "recommended_demand", "") if analysis else ""
+
+    body_paragraphs = []
+    subject = ""
+    demand_text = ""
+
+    # 2. Attempt dynamic LangChain generation if API key is present
+    api_key = os.getenv("GROQ_API_KEY", "")
+    try:
+        from backend.config import settings
+        if not api_key:
+            api_key = getattr(settings, "GROQ_API_KEY", "") or ""
+    except Exception:
+        pass
+
+    llm_succeeded = False
+    if api_key:
+        try:
+            from langchain_groq import ChatGroq
+            from langchain_core.prompts import ChatPromptTemplate
+            from langchain_core.output_parsers import JsonOutputParser
+
+            prompt_tmpl = ChatPromptTemplate.from_template(
+                """You are an Indian advocate drafting the formal numbered body paragraphs of a legal demand notice for a tenant in Bengaluru under Karnataka tenancy laws.
+
+Case Type: {case_type}
+Identified Statutory Violations:
+{violations_text}
+
+Recommended Demand:
+{demand_summary}
+
+Instructions:
+1. Return JSON with exactly these keys:
+   - "subject": A concise, formal subject line citing the relevant acts (e.g. Karnataka Rent Act 1999).
+   - "body_paragraphs": A list of 4-6 numbered body paragraphs starting with "That...".
+   - "demand_text": A strict demand paragraph giving 15 (fifteen) days to comply.
+2. Follow Indian legal notice conventions. Do not use US legal symbol '§'. Write 'Section'.
+3. Do NOT include AI disclaimers, markdown lines, or greetings/closings (those are added by the template)."""
+            )
+
+            parser = JsonOutputParser()
+            model_name = getattr(settings, "GROQ_MODEL", "llama-3.3-70b-versatile")
+            llm = ChatGroq(model=model_name, temperature=0.1, api_key=api_key, request_timeout=5, max_retries=1)
+            chain = prompt_tmpl | llm | parser
+
+            res = chain.invoke({
+                "case_type": case_type,
+                "violations_text": violations_text or "General tenancy grievance under Karnataka Rent Act.",
+                "demand_summary": demand_summary or "Compliance with statutory requirements within 15 days."
+            })
+
+            if isinstance(res, dict) and "body_paragraphs" in res and res["body_paragraphs"]:
+                subject = res.get("subject", "")
+                raw_paras = res["body_paragraphs"]
+                demand_text = res.get("demand_text", "")
+
+                for p in raw_paras:
+                    san = sanitize(str(p))
+                    clean_p = san.text.strip()
+                    if clean_p:
+                        body_paragraphs.append(clean_p)
+
+                if demand_text:
+                    demand_text = sanitize(demand_text).text.strip()
+
+                llm_succeeded = True
+        except Exception:
+            llm_succeeded = False
+
+    # 3. Deterministic Fallback incorporating dynamic violations if LLM is offline
+    if not llm_succeeded or not body_paragraphs:
+        if case_type == "deposit":
+            deposit = int(getattr(state, "deposit_paid", 0) or 0)
+            monthly_rent = int(getattr(state, "monthly_rent", 0) or 0)
+            deductions = int(getattr(state, "deductions_claimed", 0) or 0)
+            move_out = getattr(state, "move_out_date", None) or "the agreed date"
+            refundable = max(0, deposit - deductions)
+            if arith and getattr(arith, "net_refundable_amount", None) is not None:
+                refundable = int(arith.net_refundable_amount)
+
+            subject = f"Subject: Legal notice calling upon you to refund the security deposit under Sections 15 and 16 of the Karnataka Rent Act, 1999."
+            body_paragraphs = [
+                f"That I was and am your tenant in the said premises on a monthly rent of Rs. {monthly_rent:,}/- under a rental agreement duly executed between us.",
+                f"That in terms of the said agreement, I paid you an interest-free refundable security deposit of Rs. {deposit:,}/-, which was to be refunded in full upon my vacating the said premises.",
+                f"That I vacated the said premises on {move_out} and handed over vacant and peaceful possession to you along with all keys and access cards, after clearing all dues up to the date of vacation.",
+                f"That you have unlawfully withheld the refund of the said security deposit without providing any lawful justification or documentary basis.",
+            ]
+            if deductions > 0:
+                body_paragraphs.append(
+                    f"That you have arbitrarily claimed deductions of Rs. {deductions:,}/- without providing itemised GST-compliant repair invoices. Ordinary wear and tear cannot be lawfully deducted under Karnataka tenancy law."
+                )
+            if analysis and getattr(analysis, "violations", None):
+                for v in analysis.violations:
+                    body_paragraphs.append(f"That {v.issue} constitutes a clear statutory violation under {v.statutory_basis}: {v.summary}")
+
+            demand_text = f"I therefore call upon you, through this notice, to pay me the sum of Rs. {refundable:,}/- being the net refundable security deposit within 15 (fifteen) days from receipt of this notice, together with interest at 12% per annum."
+        else:
+            current_rent = int(getattr(state, "current_rent", 0) or 0)
+            proposed_rent = int(getattr(state, "proposed_rent", 0) or 0)
+            hike_pct = round(((proposed_rent - current_rent) / current_rent * 100)) if current_rent > 0 else 0
+            subject = f"Subject: Legal notice calling upon you to rescind unlawful rent increase under Section 12 of the Karnataka Rent Act, 1999."
+            body_paragraphs = [
+                f"That I am your tenant in the said premises paying a monthly rent of Rs. {current_rent:,}/- under the rental agreement executed between us.",
+                f"That you have purported to increase the monthly rent to Rs. {proposed_rent:,}/- representing an increase of {hike_pct}%, without required statutory notice.",
+                f"That a unilateral rent increase without 90 days prior written notice is illegal and void ab initio under the Karnataka Rent Act, 1999.",
+            ]
+            if analysis and getattr(analysis, "violations", None):
+                for v in analysis.violations:
+                    body_paragraphs.append(f"That {v.issue} violates {v.statutory_basis}: {v.summary}")
+            demand_text = f"I therefore call upon you, through this notice, to forthwith withdraw the unlawful rent increase demand within 15 (fifteen) days from receipt of this notice."
+
+    # Final sanitization pass
+    sanitized_paragraphs = [sanitize(p).text.strip() for p in body_paragraphs if p.strip()]
+
+    return NoticeOutput(
+        date=today_str,
+        from_name=tenant,
+        from_address=address,
+        to_name=landlord,
+        to_address=address,
+        subject=subject,
+        body_paragraphs=sanitized_paragraphs,
+        demand_text=demand_text,
+        closing="Yours faithfully,",
+        signature_name=tenant
+    )
+

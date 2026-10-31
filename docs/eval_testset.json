@@ -1,0 +1,522 @@
+[
+  {
+    "id": "TC-DEP-001",
+    "category": "deposit",
+    "query": "Landlord collected 10 months security deposit of 300000 on rent of 30000 and refuses to refund excess",
+    "facts": {
+      "case_type": "deposit",
+      "monthly_rent": 30000,
+      "deposit_paid": 300000,
+      "deductions_claimed": 0,
+      "itemised_bills_provided": true
+    },
+    "expected_kb_chunks": ["KB-DEP-001"],
+    "expected_verdict": "excess_deposit",
+    "statutory_reference": "Karnataka Rent Act, 1999 Section 15/16; Model Tenancy Act benchmark Section 11"
+  },
+  {
+    "id": "TC-DEP-002",
+    "category": "deposit",
+    "query": "Landlord withheld 45000 for painting charges and deep cleaning without providing any GST invoice or repair bills",
+    "facts": {
+      "case_type": "deposit",
+      "monthly_rent": 35000,
+      "deposit_paid": 70000,
+      "deductions_claimed": 45000,
+      "itemised_bills_provided": false
+    },
+    "expected_kb_chunks": ["KB-WTR-002"],
+    "expected_verdict": "unlawful_deduction",
+    "statutory_reference": "Karnataka Rent Act Section 15/16; Indian Contract Act Section 73"
+  },
+  {
+    "id": "TC-DEP-003",
+    "category": "deposit",
+    "query": "Landlord took 6 months deposit 210000 on 35000 rent and also deducted 55000 for routine maintenance and wall touch up without invoices",
+    "facts": {
+      "case_type": "deposit",
+      "monthly_rent": 35000,
+      "deposit_paid": 210000,
+      "deductions_claimed": 55000,
+      "itemised_bills_provided": false
+    },
+    "expected_kb_chunks": ["KB-DEP-001", "KB-WTR-002"],
+    "expected_verdict": "both_deposit_violations",
+    "statutory_reference": "Karnataka Rent Act Section 15/16; Indian Contract Act Section 73"
+  },
+  {
+    "id": "TC-DEP-004",
+    "category": "deposit",
+    "query": "Tenant broke bathroom marble countertop and landlord deducted 15000 with attached GST vendor repair invoice and receipt",
+    "facts": {
+      "case_type": "deposit",
+      "monthly_rent": 30000,
+      "deposit_paid": 60000,
+      "deductions_claimed": 15000,
+      "itemised_bills_provided": true
+    },
+    "expected_kb_chunks": ["KB-WTR-002"],
+    "expected_verdict": "lawful_deduction",
+    "statutory_reference": "Agreement authorized damage with itemised bill is permissible"
+  },
+  {
+    "id": "TC-DEP-005",
+    "category": "deposit",
+    "query": "Deposit paid was exactly 2 months rent 50000 on monthly rent 25000 and full amount refunded upon vacating with no deductions",
+    "facts": {
+      "case_type": "deposit",
+      "monthly_rent": 25000,
+      "deposit_paid": 50000,
+      "deductions_claimed": 0,
+      "itemised_bills_provided": true
+    },
+    "expected_kb_chunks": ["KB-DEP-001"],
+    "expected_verdict": "lawful_compliant",
+    "statutory_reference": "Complies with 2-month benchmark"
+  },
+  {
+    "id": "TC-DEP-006",
+    "category": "deposit",
+    "query": "Landlord deducted 30000 for regular fading of wall paint after 3 years tenancy claiming apartment must look brand new",
+    "facts": {
+      "case_type": "deposit",
+      "monthly_rent": 30000,
+      "deposit_paid": 60000,
+      "deductions_claimed": 30000,
+      "itemised_bills_provided": false
+    },
+    "expected_kb_chunks": ["KB-WTR-002"],
+    "expected_verdict": "unlawful_deduction",
+    "statutory_reference": "Wear and tear cannot be arbitrarily deducted"
+  },
+  {
+    "id": "TC-DEP-007",
+    "category": "deposit",
+    "query": "Security deposit held 5 months 250000 for 50000 rent in Koramangala and owner refused to pay interest on delayed refund",
+    "facts": {
+      "case_type": "deposit",
+      "monthly_rent": 50000,
+      "deposit_paid": 250000,
+      "deductions_claimed": 0,
+      "itemised_bills_provided": true
+    },
+    "expected_kb_chunks": ["KB-DEP-001"],
+    "expected_verdict": "excess_deposit",
+    "statutory_reference": "Karnataka Rent Act Section 15/16; 3 months excess holding"
+  },
+  {
+    "id": "TC-DEP-008",
+    "category": "deposit",
+    "query": "Landlord withheld entire 120000 deposit citing vague cleaning charges without itemised bills or agreement clause",
+    "facts": {
+      "case_type": "deposit",
+      "monthly_rent": 30000,
+      "deposit_paid": 120000,
+      "deductions_claimed": 120000,
+      "itemised_bills_provided": false
+    },
+    "expected_kb_chunks": ["KB-DEP-001", "KB-WTR-002"],
+    "expected_verdict": "both_deposit_violations",
+    "statutory_reference": "Section 15/16 Rent Act and Section 73 Contract Act"
+  },
+  {
+    "id": "TC-DEP-009",
+    "category": "deposit",
+    "query": "Landlord made deduction for replacing broken geyser which burned out due to electrical short circuit in building wiring",
+    "facts": {
+      "case_type": "deposit",
+      "monthly_rent": 28000,
+      "deposit_paid": 56000,
+      "deductions_claimed": 12000,
+      "itemised_bills_provided": false
+    },
+    "expected_kb_chunks": ["KB-WTR-002"],
+    "expected_verdict": "unlawful_deduction",
+    "statutory_reference": "Structural/fixture maintenance without tenant fault"
+  },
+  {
+    "id": "TC-DEP-010",
+    "category": "deposit",
+    "query": "Security deposit was 8 months rent 400000 on 50000 rent landlord claiming Bengaluru customary practice allows 10 months",
+    "facts": {
+      "case_type": "deposit",
+      "monthly_rent": 50000,
+      "deposit_paid": 400000,
+      "deductions_claimed": 0,
+      "itemised_bills_provided": true
+    },
+    "expected_kb_chunks": ["KB-DEP-001"],
+    "expected_verdict": "excess_deposit",
+    "statutory_reference": "Statutory limit supersedes customary landlord assertions"
+  },
+  {
+    "id": "TC-RNK-001",
+    "category": "rent_hike",
+    "query": "Landlord raised rent by 25 percent on WhatsApp with only 15 days notice prior to renewal",
+    "facts": {
+      "case_type": "rent_hike",
+      "current_rent": 40000,
+      "proposed_rent": 50000,
+      "notice_received_date": "2026-09-15",
+      "effective_date": "2026-09-30",
+      "notice_channel": "WhatsApp"
+    },
+    "expected_kb_chunks": ["KB-RNT-003", "KB-NOT-004"],
+    "expected_verdict": "deficient_notice",
+    "statutory_reference": "Karnataka Rent Act Sections 7/9; 90 days statutory notice requirement"
+  },
+  {
+    "id": "TC-RNK-002",
+    "category": "rent_hike",
+    "query": "Landlord gave verbal notice in elevator demanding 40 percent rent hike effective next month",
+    "facts": {
+      "case_type": "rent_hike",
+      "current_rent": 30000,
+      "proposed_rent": 42000,
+      "notice_received_date": "2026-09-01",
+      "effective_date": "2026-10-01",
+      "notice_channel": "Verbal"
+    },
+    "expected_kb_chunks": ["KB-RNT-003", "KB-NOT-004"],
+    "expected_verdict": "deficient_notice",
+    "statutory_reference": "Notice channel invalid and shortfall of 60 days"
+  },
+  {
+    "id": "TC-RNK-003",
+    "category": "rent_hike",
+    "query": "Landlord served formal legal notice via registered post 100 days prior to lease expiry for agreed 5 percent rent escalation as per registered agreement",
+    "facts": {
+      "case_type": "rent_hike",
+      "current_rent": 35000,
+      "proposed_rent": 36750,
+      "notice_received_date": "2026-06-01",
+      "effective_date": "2026-09-15",
+      "notice_channel": "Registered Post"
+    },
+    "expected_kb_chunks": ["KB-RNT-003"],
+    "expected_verdict": "lawful_compliant",
+    "statutory_reference": "106 days notice met (>90 days); registered instrument"
+  },
+  {
+    "id": "TC-RNK-004",
+    "category": "rent_hike",
+    "query": "Landlord issued email notice 29 days before claiming 30 percent hike without contractual agreement clause",
+    "facts": {
+      "case_type": "rent_hike",
+      "current_rent": 35000,
+      "proposed_rent": 45500,
+      "notice_received_date": "2026-09-15",
+      "effective_date": "2026-10-14",
+      "notice_channel": "Email"
+    },
+    "expected_kb_chunks": ["KB-RNT-003"],
+    "expected_verdict": "deficient_notice",
+    "statutory_reference": "Notice gap 29 days vs mandatory 90 days"
+  },
+  {
+    "id": "TC-RNK-005",
+    "category": "rent_hike",
+    "query": "Landlord demanding rent increase during active 11-month fixed lock-in term without any escalation clause in agreement",
+    "facts": {
+      "case_type": "rent_hike",
+      "current_rent": 28000,
+      "proposed_rent": 34000,
+      "notice_received_date": "2026-08-01",
+      "effective_date": "2026-09-01",
+      "notice_channel": "SMS"
+    },
+    "expected_kb_chunks": ["KB-RNT-003"],
+    "expected_verdict": "deficient_notice",
+    "statutory_reference": "Unilateral alteration during fixed term impermissible"
+  },
+  {
+    "id": "TC-RNK-006",
+    "category": "rent_hike",
+    "query": "Owner sent WhatsApp message saying rent is increasing from 22000 to 28000 effective next week",
+    "facts": {
+      "case_type": "rent_hike",
+      "current_rent": 22000,
+      "proposed_rent": 28000,
+      "notice_received_date": "2026-10-01",
+      "effective_date": "2026-10-08",
+      "notice_channel": "WhatsApp"
+    },
+    "expected_kb_chunks": ["KB-RNT-003", "KB-NOT-004"],
+    "expected_verdict": "deficient_notice",
+    "statutory_reference": "Notice gap 7 days; informal channel"
+  },
+  {
+    "id": "TC-RNK-007",
+    "category": "rent_hike",
+    "query": "Landlord sent registered post letter 95 days in advance proposing 8 percent revision as per clause 4 of agreement",
+    "facts": {
+      "case_type": "rent_hike",
+      "current_rent": 50000,
+      "proposed_rent": 54000,
+      "notice_received_date": "2026-05-01",
+      "effective_date": "2026-08-15",
+      "notice_channel": "Registered Post"
+    },
+    "expected_kb_chunks": ["KB-RNT-003"],
+    "expected_verdict": "lawful_compliant",
+    "statutory_reference": "Notice period 106 days (>90 days); valid service"
+  },
+  {
+    "id": "TC-RNK-008",
+    "category": "rent_hike",
+    "query": "Owner raised rent by 50 percent suddenly citing inflation and property appreciation with 30 days notice",
+    "facts": {
+      "case_type": "rent_hike",
+      "current_rent": 30000,
+      "proposed_rent": 45000,
+      "notice_received_date": "2026-09-01",
+      "effective_date": "2026-10-01",
+      "notice_channel": "Email"
+    },
+    "expected_kb_chunks": ["KB-RNT-003"],
+    "expected_verdict": "deficient_notice",
+    "statutory_reference": "Notice gap 30 days vs 90 days statutory rule"
+  },
+  {
+    "id": "TC-EMG-001",
+    "category": "emergency",
+    "query": "Landlord cut off electricity power cut to force me to vacate apartment",
+    "facts": {
+      "case_type": "harassment",
+      "pin_code": "560038",
+      "messages": [{"content": "Landlord disconnected power cut electricity supply yesterday"}]
+    },
+    "expected_kb_chunks": [],
+    "expected_verdict": "emergency_triage",
+    "statutory_reference": "Karnataka Rent Act Section 27; BESCOM 1912 / Police 112"
+  },
+  {
+    "id": "TC-EMG-002",
+    "category": "emergency",
+    "query": "Owner shut off water supply water cut and locked main gate to house",
+    "facts": {
+      "case_type": "harassment",
+      "pin_code": "560001",
+      "messages": [{"content": "Owner shut off water cut and threatened violence"}]
+    },
+    "expected_kb_chunks": [],
+    "expected_verdict": "emergency_triage",
+    "statutory_reference": "Karnataka Rent Act Section 27; BWSSB 1916 / Police 112"
+  },
+  {
+    "id": "TC-EMG-003",
+    "category": "emergency",
+    "query": "Landlord hired goons and threatened violence thrown out if I do not leave by tonight",
+    "facts": {
+      "case_type": "harassment",
+      "pin_code": "560066",
+      "messages": [{"content": "Goons threatened violence and locked out tenant"}]
+    },
+    "expected_kb_chunks": [],
+    "expected_verdict": "emergency_triage",
+    "statutory_reference": "Police 112 / DLSA mayo hall"
+  },
+  {
+    "id": "TC-EMG-004",
+    "category": "emergency",
+    "query": "Landlord put a padlock on my door locked out while I was at office and disconnected water cut",
+    "facts": {
+      "case_type": "harassment",
+      "pin_code": "560004",
+      "messages": [{"content": "Locked out and water cut"}]
+    },
+    "expected_kb_chunks": [],
+    "expected_verdict": "emergency_triage",
+    "statutory_reference": "Section 27 Karnataka Rent Act; South Sub-Division DLSA"
+  },
+  {
+    "id": "TC-EMG-005",
+    "category": "emergency",
+    "query": "Owner cut off power supply and removed electric meter from house to force eviction",
+    "facts": {
+      "case_type": "harassment",
+      "pin_code": "560024",
+      "messages": [{"content": "Power cut electricity cut by owner"}]
+    },
+    "expected_kb_chunks": [],
+    "expected_verdict": "emergency_triage",
+    "statutory_reference": "Section 27 Karnataka Rent Act; Yelahanka Mini Vidhana Soudha"
+  },
+  {
+    "id": "TC-NOT-001",
+    "category": "notice_service",
+    "query": "Demand notice for rent revision sent via informal WhatsApp text without formal registered post instrument",
+    "facts": {
+      "case_type": "rent_hike",
+      "current_rent": 30000,
+      "proposed_rent": 35000,
+      "notice_received_date": "2026-06-01",
+      "effective_date": "2026-09-30",
+      "notice_channel": "WhatsApp"
+    },
+    "expected_kb_chunks": ["KB-NOT-004", "KB-RNT-003"],
+    "expected_verdict": "invalid_channel",
+    "statutory_reference": "KB-NOT-004 formal legal instrument required"
+  },
+  {
+    "id": "TC-NOT-002",
+    "category": "notice_service",
+    "query": "Landlord informed revision verbally without written registered instrument or email confirmation",
+    "facts": {
+      "case_type": "rent_hike",
+      "current_rent": 40000,
+      "proposed_rent": 48000,
+      "notice_received_date": "2026-05-01",
+      "effective_date": "2026-09-01",
+      "notice_channel": "Verbal"
+    },
+    "expected_kb_chunks": ["KB-NOT-004", "KB-RNT-003"],
+    "expected_verdict": "invalid_channel",
+    "statutory_reference": "KB-NOT-004 formal notice instrument"
+  },
+  {
+    "id": "TC-NOT-003",
+    "category": "notice_service",
+    "query": "Legal demand notice served by registered post with acknowledgment due card signed by recipient",
+    "facts": {
+      "case_type": "rent_hike",
+      "current_rent": 45000,
+      "proposed_rent": 49500,
+      "notice_received_date": "2026-05-01",
+      "effective_date": "2026-09-01",
+      "notice_channel": "Registered Post"
+    },
+    "expected_kb_chunks": ["KB-NOT-004", "KB-RNT-003"],
+    "expected_verdict": "lawful_compliant",
+    "statutory_reference": "Valid service mode under statutory rules"
+  },
+  {
+    "id": "TC-NOT-004",
+    "category": "notice_service",
+    "query": "Demand served by formal legal notice drafted by advocate and delivered via courier and speed post",
+    "facts": {
+      "case_type": "rent_hike",
+      "current_rent": 50000,
+      "proposed_rent": 55000,
+      "notice_received_date": "2026-04-01",
+      "effective_date": "2026-08-01",
+      "notice_channel": "Legal Notice"
+    },
+    "expected_kb_chunks": ["KB-NOT-004", "KB-RNT-003"],
+    "expected_verdict": "lawful_compliant",
+    "statutory_reference": "Formal legal notice meets service standards"
+  },
+  {
+    "id": "TC-OOS-001",
+    "category": "out_of_scope",
+    "query": "What is the penalty for violating commercial industrial zoning regulations in Peenya Industrial Area",
+    "facts": {
+      "case_type": "unknown",
+      "monthly_rent": 0,
+      "deposit_paid": 0
+    },
+    "expected_kb_chunks": [],
+    "expected_verdict": "out_of_scope",
+    "statutory_reference": "Commercial zoning law outside residential tenancy scope"
+  },
+  {
+    "id": "TC-OOS-002",
+    "category": "out_of_scope",
+    "query": "Quantum electrodynamics perturbation theory on Riemannian manifolds and wave equations",
+    "facts": {
+      "case_type": "unknown",
+      "monthly_rent": 0,
+      "deposit_paid": 0
+    },
+    "expected_kb_chunks": [],
+    "expected_verdict": "out_of_scope",
+    "statutory_reference": "Zero legal relevance"
+  },
+  {
+    "id": "TC-OOS-003",
+    "category": "out_of_scope",
+    "query": "Can my landlord prevent me from keeping a golden retriever pet dog in the flat under BBMP pet guidelines",
+    "facts": {
+      "case_type": "deposit",
+      "monthly_rent": 30000,
+      "deposit_paid": 60000,
+      "deductions_claimed": 0,
+      "itemised_bills_provided": true
+    },
+    "expected_kb_chunks": [],
+    "expected_verdict": "out_of_scope",
+    "statutory_reference": "Pet bylaws not governed by Karnataka Rent Act or deposit cap"
+  },
+  {
+    "id": "TC-OOS-004",
+    "category": "out_of_scope",
+    "query": "Ancestral agricultural land partition suit between brothers in Mandya district revenue court",
+    "facts": {
+      "case_type": "unknown",
+      "monthly_rent": 0,
+      "deposit_paid": 0
+    },
+    "expected_kb_chunks": [],
+    "expected_verdict": "out_of_scope",
+    "statutory_reference": "Revenue/inheritance law outside residential tenancy"
+  },
+  {
+    "id": "TC-OOS-005",
+    "category": "out_of_scope",
+    "query": "How to register trademark and copyright for software product in Bengaluru startup",
+    "facts": {
+      "case_type": "unknown",
+      "monthly_rent": 0,
+      "deposit_paid": 0
+    },
+    "expected_kb_chunks": [],
+    "expected_verdict": "out_of_scope",
+    "statutory_reference": "IP law outside residential tenancy"
+  },
+  {
+    "id": "TC-EDG-001",
+    "category": "edge_case",
+    "query": "Security deposit exactly equals 2.0 months rent and deduction is zero but landlord delayed refund by 45 days",
+    "facts": {
+      "case_type": "deposit",
+      "monthly_rent": 40000,
+      "deposit_paid": 80000,
+      "deductions_claimed": 0,
+      "itemised_bills_provided": true
+    },
+    "expected_kb_chunks": ["KB-DEP-001"],
+    "expected_verdict": "deposit_delay_interest",
+    "statutory_reference": "Deposit amount compliant but retention entitles to interest"
+  },
+  {
+    "id": "TC-EDG-002",
+    "category": "edge_case",
+    "query": "Rent hike of 0 percent but landlord demanded notice period of 10 days for move out",
+    "facts": {
+      "case_type": "rent_hike",
+      "current_rent": 30000,
+      "proposed_rent": 30000,
+      "notice_received_date": "2026-09-01",
+      "effective_date": "2026-09-11",
+      "notice_channel": "Letter"
+    },
+    "expected_kb_chunks": ["KB-RNT-003"],
+    "expected_verdict": "lawful_compliant",
+    "statutory_reference": "Zero percent hike constitutes no rent increase violation"
+  },
+  {
+    "id": "TC-EDG-003",
+    "category": "edge_case",
+    "query": "Security deposit is 2.1 months rent 63000 on 30000 rent landlord deducted 1000 with GST bill for broken door lock",
+    "facts": {
+      "case_type": "deposit",
+      "monthly_rent": 30000,
+      "deposit_paid": 63000,
+      "deductions_claimed": 1000,
+      "itemised_bills_provided": true
+    },
+    "expected_kb_chunks": ["KB-DEP-001"],
+    "expected_verdict": "excess_deposit",
+    "statutory_reference": "Marginal excess of 0.1 months (3000 INR) above 2.0 benchmark"
+  }
+]

@@ -104,6 +104,7 @@ class NavigatorState(BaseModel):
     user_confirmed: bool = False
     notice_generated: bool = False
     notice_pdf_url: Optional[str] = None
+    orchestrated_notice: Optional[Dict[str, Any]] = None
     messages: List[Dict[str, str]] = Field(default_factory=list)
 
 
@@ -429,7 +430,7 @@ def analyze_node(state: Dict[str, Any]) -> Dict[str, Any]:
         profile_text = f"""DISPUTE TYPE: SECURITY DEPOSIT DISPUTE (Move-out / Withheld Funds)
 - Monthly Rent: ₹{s.monthly_rent:,.0f}
 - Total Deposit Paid: ₹{s.deposit_paid:,.0f} ({arith.deposit_months} months rent)
-- Permissible Residential Benchmark: 2.0 Months (₹{(s.monthly_rent or 0)*2:,.0f})
+- Permissible Residential Benchmark: 2.0 Months (Model Tenancy Act 2021 Sec 11 benchmark; Karnataka Rent Act 1999 Sec 15/16: ₹{(s.monthly_rent or 0)*2:,.0f})
 - Excess Advance Holding: {arith.excess_deposit_months} Months (₹{arith.excess_deposit_months * (s.monthly_rent or 0):,.0f})
 - Deductions Contested: ₹{s.deductions_claimed:,.0f}
 - Itemised GST Repair Invoices Provided by Landlord: {'Yes' if s.itemised_bills_provided else 'NO (Arbitrary deductions without GST bills)'}
@@ -439,7 +440,7 @@ def analyze_node(state: Dict[str, Any]) -> Dict[str, Any]:
 STRICT BOUNDARY RULES FOR DEPOSIT ANALYSIS:
 1. This dispute is EXCLUSIVELY about security deposit return and arbitrary deductions upon move-out.
 2. Under NO circumstance mention rent increases, rent hikes, 30% hikes, or 90-day rent revision notices.
-3. Statutory Grounds: Karnataka Rent Act & Indian Contract Act prohibit arbitrary deductions for normal wear & tear without itemised GST invoices.
+3. Statutory Grounds: Model Tenancy Act 2021 Section 11 (2-month deposit benchmark), Karnataka Rent Act 1999 Sections 15/16 (advance holding/receipts), and Indian Contract Act Section 73 (prohibiting arbitrary deductions for wear & tear without itemised GST invoices).
 4. Exact Math: The excess holding is {arith.excess_deposit_months} months = ₹{arith.excess_deposit_months * (s.monthly_rent or 0):,.0f}. The full refundable amount demanded is ₹{arith.net_refundable_amount:,.0f}. Do NOT confuse excess months with total deposit."""
     elif s.case_type == "rent_hike":
         profile_text = f"""DISPUTE TYPE: UNILATERAL RENT HIKE DISPUTE (Ongoing Tenancy)
@@ -475,7 +476,7 @@ INSTRUCTION: Base your analysis strictly on the dispute facts and Karnataka hous
         api_key = os.getenv("GROQ_API_KEY") or settings.GROQ_API_KEY or ""
         if api_key:
             parser = JsonOutputParser()
-            llm = ChatGroq(model=settings.GROQ_MODEL or "llama-3.3-70b-versatile", temperature=0.0, api_key=api_key)
+            llm = ChatGroq(model=settings.GROQ_MODEL or "llama-3.3-70b-versatile", temperature=0.0, api_key=api_key, request_timeout=5, max_retries=1)
             prompt_template = ChatPromptTemplate.from_template("{input}")
             chain = prompt_template | llm | parser
             result = chain.invoke({"input": prompt})
@@ -492,15 +493,22 @@ INSTRUCTION: Base your analysis strictly on the dispute facts and Karnataka hous
     if isinstance(result, dict):
         if "violations" in result and isinstance(result["violations"], list):
             for v in result["violations"]:
-                if isinstance(v, dict):
+                if isinstance(v, LegalViolation):
+                    violations.append(v)
+                    citations.append(v.statutory_basis)
+                elif isinstance(v, dict):
+                    default_chunk = retrieved_chunks[0] if retrieved_chunks else None
+                    stat_basis = v.get("statutory_basis") or (f"{default_chunk.act} - {default_chunk.section}" if default_chunk else "Verified Karnataka Statute")
+                    chunk_id = v.get("kb_chunk_id") or (default_chunk.id if default_chunk else "KB-VERIFIED")
+                    chunk_ver = v.get("is_verified", True)
                     violations.append(LegalViolation(
                         issue=v.get("issue", "Unknown violation"),
-                        statutory_basis=v.get("statutory_basis", f"{chunk.act} - {chunk.section}"),
-                        kb_chunk_id=v.get("kb_chunk_id", chunk.id),
-                        is_verified=v.get("is_verified", chunk.verified),
+                        statutory_basis=stat_basis,
+                        kb_chunk_id=chunk_id,
+                        is_verified=chunk_ver,
                         summary=v.get("summary", "")
                     ))
-                    citations.append(v.get("statutory_basis", f"{chunk.act} - {chunk.section}"))
+                    citations.append(stat_basis)
         else:
             # Fallback structure
             violations = result.get("violations", [])
@@ -530,13 +538,13 @@ def _fallback_analysis(s, arith, retrieved_chunks, unverified_ids, chunk_context
     if s.case_type == "deposit":
         dep_chunk = kb.get_chunk("KB-DEP-001")
         if dep_chunk and arith.deposit_months and arith.deposit_months > 2.0:
-            citations.append(f"{dep_chunk.act} - {dep_chunk.section}")
+            citations.append("Model Tenancy Act, 2021 Sec 11; Karnataka Rent Act, 1999 Sec 15/16")
             violations.append(LegalViolation(
                 issue=f"Excessive Security Deposit ({arith.deposit_months} months held vs 2-month legal benchmark)",
-                statutory_basis=f"{dep_chunk.act} - {dep_chunk.section}",
+                statutory_basis="Model Tenancy Act, 2021 Sec 11; Karnataka Rent Act, 1999 Sec 15/16",
                 kb_chunk_id=dep_chunk.id,
                 is_verified=dep_chunk.verified,
-                summary=f"Landlord collected Γé╣{s.deposit_paid:,.0f} ({arith.deposit_months} months), exceeding the 2-month residential benchmark. Γé╣{arith.excess_deposit_months * (s.monthly_rent or 0):,.0f} represents excess advance holding."
+                summary=f"Landlord collected ₹{s.deposit_paid:,.0f} ({arith.deposit_months} months), exceeding the 2-month residential benchmark under Model Tenancy Act Section 11 and Karnataka Rent Act Section 15/16. ₹{arith.excess_deposit_months * (s.monthly_rent or 0):,.0f} represents excess advance holding."
             ))
         wtr_chunk = kb.get_chunk("KB-WTR-002")
         if wtr_chunk and (s.deductions_claimed or 0) > 0:
@@ -583,8 +591,9 @@ def confirm_node(state: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def generate_notice_node(state: Dict[str, Any]) -> Dict[str, Any]:
-    """Generates the ReportLab PDF Demand Notice with vault re-insertion at render time."""
+    """Generates the legal Demand Notice (.docx format) with vault re-insertion at render time."""
     from backend.pdf_gen import generate_demand_notice_docx
+    from backend.notice_orchestrator import orchestrate_notice
 
     s = NavigatorState(**state)
     s.current_step = "generate_notice"
@@ -592,12 +601,17 @@ def generate_notice_node(state: Dict[str, Any]) -> Dict[str, Any]:
     if not s.user_confirmed:
         return s.model_dump()
 
-    pdf_filename = f"demand_notice_{s.session_id}.pdf"
-    pdf_path = settings.DATA_DIR / pdf_filename
+    # 1. Orchestrate dynamic notice content using LangChain + sanitizer guardrails
+    orchestrated = orchestrate_notice(s)
+    s.orchestrated_notice = orchestrated.dict() if hasattr(orchestrated, 'dict') else orchestrated.model_dump()
+
+    # 2. Render to DOCX
+    docx_filename = f"demand_notice_{s.session_id}.docx"
+    docx_path = settings.DATA_DIR / docx_filename
 
     generate_demand_notice_docx(
         state=s,
-        output_path=pdf_path
+        output_path=docx_path
     )
 
     s.notice_generated = True
