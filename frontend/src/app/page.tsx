@@ -77,6 +77,11 @@ export default function Home() {
     setLatestAnalysis(null);
     setLatestFormData(null);
     setPdfUrl('');
+    // Navigate back to home screen after clearing data
+    setViewMode('command');
+    setActiveTab('wizard');
+    setIsPreviewOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const scrollToFaq = () => {
