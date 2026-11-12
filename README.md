@@ -1,4 +1,4 @@
-﻿# Namma Tenant Navigator 
+# Namma Tenant Navigator 
 
 > **Agentic AI Legal Aid & Tenant Rights Engine for Urban Renters in Bengaluru**  
 > Grounded in the **Karnataka Rent Act, 1999**, **Transfer of Property Act, 1882**, and the **Model Tenancy Framework**.  
@@ -81,12 +81,11 @@ graph TD
 
 ### 1. Backend Setup
 ```powershell
-# Navigate to backend and activate venv
-cd D:\NammaRent-main\backend
-.\venv\Scripts\Activate.ps1
+# From project root: D:\NammaRent-main\NammaRent-main
+.\backend\venv\Scripts\Activate.ps1
 
 # Install dependencies (if not already installed)
-pip install -r requirements.txt
+pip install -r backend\requirements.txt
 
 # Run FastAPI backend server (Port 8000)
 uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
@@ -95,7 +94,7 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 ### 2. Frontend Setup
 ```powershell
 # Navigate to frontend in a new terminal
-cd d:\agenticai\frontend
+cd D:\NammaRent-main\NammaRent-main\frontend
 
 # Install node dependencies
 npm install

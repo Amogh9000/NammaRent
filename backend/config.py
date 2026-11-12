@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     
     # LLM Settings
     GROQ_API_KEY: str = ""
-    GROQ_MODEL: str = "qwen-qwq-32b"  # Qwen QwQ 32B model for strict schema & reasoning
+    GROQ_MODEL: str = "qwen/qwen3.8-27b"  # Qwen 27B model for strict schema & reasoning
     GROQ_FALLBACK_MODEL: str = "llama-3.1-8b-instant"
     
     # Server Settings
