@@ -10,6 +10,13 @@ const nextConfig = {
       },
     ];
   },
+  // Increase proxy timeout for LLM-heavy endpoints (confirm / notice generation)
+  httpAgentOptions: {
+    keepAlive: true,
+  },
+  experimental: {
+    proxyTimeout: 120000, // 120 seconds
+  },
 };
 
 module.exports = nextConfig;

@@ -263,12 +263,22 @@ def process_wizard_step(req: StepRequest):
         state_dict = analyze_node(state_dict)
     except PrivacyLeakException as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        # If LLM analysis fails, continue with whatever state we have
+        import traceback
+        traceback.print_exc()
 
     # 6. Confirm or Generate Notice
     if req.confirm_generation or current.user_confirmed:
         state_dict["user_confirmed"] = True
         state_dict = confirm_node(state_dict)
-        state_dict = generate_notice_node(state_dict)
+        try:
+            state_dict = generate_notice_node(state_dict)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            # Still return the analysis even if notice generation fails
+            state_dict["notice_generated"] = False
 
     updated_state = NavigatorState(**state_dict)
     SESSION_STATES[session_id] = updated_state
